@@ -1,0 +1,179 @@
+# ---------------------------------------------------------------------------
+# Python / FastAPI (backend)
+# ---------------------------------------------------------------------------
+
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Package / dependency managers
+.pdm-python
+.pdm-build/
+__pypackages__/
+poetry.toml
+.ruff_cache/
+.uv/
+
+# Testing / coverage
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+htmlcov/
+.hypothesis/
+nosetests.xml
+
+# Type checkers / linters
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Notebooks
+.ipynb_checkpoints/
+profile_default/
+ipython_config.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Alembic (keep versions/, ignore local overrides)
+alembic.ini.local
+
+# Local SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# ---------------------------------------------------------------------------
+# Node / Next.js (frontend)
+# ---------------------------------------------------------------------------
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build output
+.next/
+out/
+
+# Production / deployment
+.vercel/
+.netlify/
+
+# Caches
+.turbo/
+.swc/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+next-env.d.ts
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+blob-report/
+/playwright/.cache/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-store/
+
+# ---------------------------------------------------------------------------
+# Environment & secrets
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.crt
+secrets.json
+credentials.json
+service-account*.json
+
+# ---------------------------------------------------------------------------
+# Editors & IDEs
+# ---------------------------------------------------------------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+
+# ---------------------------------------------------------------------------
+# OS files
+# ---------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ---------------------------------------------------------------------------
+# Logs, temp & local tooling
+# ---------------------------------------------------------------------------
+logs/
+*.log
+tmp/
+temp/
+.cache/
+
+# Docker local overrides
+docker-compose.override.yml
+
+# Claude Code local settings (keep shared .claude/settings.json)
+.claude/settings.local.json
