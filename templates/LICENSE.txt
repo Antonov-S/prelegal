@@ -1,0 +1,49 @@
+LICENSE NOTICE FOR THIS DIRECTORY
+
+Every legal agreement template in this "templates" directory is a copy of a
+Common Paper standard agreement, obtained from the Common Paper GitHub
+organization at https://github.com/CommonPaper.
+
+All of these documents are licensed under the Creative Commons Attribution 4.0
+International license (CC BY 4.0):
+
+    https://creativecommons.org/licenses/by/4.0/
+
+Under CC BY 4.0 you are free to:
+
+  * Share  - copy and redistribute the material in any medium or format
+  * Adapt  - remix, transform, and build upon the material for any purpose,
+             even commercially
+
+as long as you give appropriate credit, provide a link to the license, and
+indicate if changes were made.
+
+ATTRIBUTION
+
+    Common Paper standard agreements (https://commonpaper.com,
+    https://github.com/CommonPaper), licensed under CC BY 4.0.
+
+Documents in this directory may be modified by the Prelegal application on
+behalf of its users. Any such modified version is an adaptation and must carry
+the attribution above along with a note that changes were made.
+
+NOTE
+
+These templates are provided as source material only. They are not legal
+advice, and neither Common Paper nor Prelegal is your lawyer. Have a qualified
+attorney review any agreement before you rely on it.
+
+SOURCE REPOSITORIES
+
+  ai-addendum.md                       https://github.com/CommonPaper/AI-Addendum
+  business-associate-agreement.md      https://github.com/CommonPaper/BAA
+  cloud-service-agreement.md           https://github.com/CommonPaper/CSA
+  data-processing-agreement.md         https://github.com/CommonPaper/DPA
+  design-partner-agreement.md          https://github.com/CommonPaper/Design-Partner-Agreement
+  mutual-nda.md                        https://github.com/CommonPaper/Mutual-NDA
+  mutual-nda-coverpage.md              https://github.com/CommonPaper/Mutual-NDA
+  partnership-agreement.md             https://github.com/CommonPaper/Partnership-Agreement
+  pilot-agreement.md                   https://github.com/CommonPaper/Pilot-Agreement
+  professional-services-agreement.md   https://github.com/CommonPaper/PSA
+  service-level-agreement.md           https://github.com/CommonPaper/SLA
+  software-license-agreement.md        https://github.com/CommonPaper/Software-License-Agreement
