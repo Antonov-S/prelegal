@@ -1,0 +1,81 @@
+{
+  "name": "Prelegal legal document template catalog",
+  "description": "Standard legal agreement templates sourced from the Common Paper GitHub organization (https://github.com/CommonPaper). All templates are licensed under CC BY 4.0. See templates/LICENSE.txt.",
+  "source": "https://github.com/CommonPaper",
+  "license": "CC BY 4.0",
+  "directory": "templates",
+  "templates": [
+    {
+      "name": "AI Addendum",
+      "description": "Addendum layered onto an existing software or cloud agreement to cover the use of artificial intelligence features, including training data, model output ownership, and AI-specific warranties and restrictions.",
+      "filename": "ai-addendum.md",
+      "source": "https://github.com/CommonPaper/AI-Addendum"
+    },
+    {
+      "name": "Business Associate Agreement",
+      "description": "HIPAA Business Associate Agreement between a covered entity and a business associate, governing the permitted uses, safeguards, and breach notification duties for protected health information.",
+      "filename": "business-associate-agreement.md",
+      "source": "https://github.com/CommonPaper/BAA"
+    },
+    {
+      "name": "Cloud Service Agreement",
+      "description": "Standard terms for a SaaS or cloud subscription, covering the order form, fees, service commitments, data handling, warranties, indemnities, and limitation of liability.",
+      "filename": "cloud-service-agreement.md",
+      "source": "https://github.com/CommonPaper/CSA"
+    },
+    {
+      "name": "Data Processing Agreement",
+      "description": "GDPR-oriented data processing agreement setting out how a processor handles a controller's personal data, including subprocessors, security measures, and international transfers.",
+      "filename": "data-processing-agreement.md",
+      "source": "https://github.com/CommonPaper/DPA"
+    },
+    {
+      "name": "Design Partner Agreement",
+      "description": "Agreement between an early-stage vendor and a design partner collaborating on product development, covering feedback, access to pre-release software, confidentiality, and IP ownership.",
+      "filename": "design-partner-agreement.md",
+      "source": "https://github.com/CommonPaper/Design-Partner-Agreement"
+    },
+    {
+      "name": "Mutual Non-Disclosure Agreement (Standard Terms)",
+      "description": "Standard terms of a two-way confidentiality agreement, covering the use and protection of confidential information, permitted disclosures, term, and return or destruction of materials. Incorporated by reference from the MNDA cover page.",
+      "filename": "mutual-nda.md",
+      "source": "https://github.com/CommonPaper/Mutual-NDA"
+    },
+    {
+      "name": "Mutual Non-Disclosure Agreement (Cover Page)",
+      "description": "Fill-in cover page for the Mutual NDA, capturing the parties, purpose, term, governing law, and signatures, and incorporating the MNDA standard terms by reference.",
+      "filename": "mutual-nda-coverpage.md",
+      "source": "https://github.com/CommonPaper/Mutual-NDA"
+    },
+    {
+      "name": "Partnership Agreement",
+      "description": "Agreement for a commercial partnership such as reselling or referrals, covering partner obligations, fees and commissions, marketing rights, term, and termination.",
+      "filename": "partnership-agreement.md",
+      "source": "https://github.com/CommonPaper/Partnership-Agreement"
+    },
+    {
+      "name": "Pilot Agreement",
+      "description": "Short-term trial or evaluation agreement letting a prospective customer test a product before committing to a full commercial contract, with a limited scope, pilot period, and simple termination.",
+      "filename": "pilot-agreement.md",
+      "source": "https://github.com/CommonPaper/Pilot-Agreement"
+    },
+    {
+      "name": "Professional Services Agreement",
+      "description": "Agreement for consulting or implementation services delivered under statements of work, covering deliverables, acceptance, fees and expenses, IP in work product, and warranties.",
+      "filename": "professional-services-agreement.md",
+      "source": "https://github.com/CommonPaper/PSA"
+    },
+    {
+      "name": "Service Level Agreement",
+      "description": "Service level commitments attached to a cloud or software agreement, defining uptime targets, support response times, exclusions, and service credits as the customer's remedy.",
+      "filename": "service-level-agreement.md",
+      "source": "https://github.com/CommonPaper/SLA"
+    },
+    {
+      "name": "Software License Agreement",
+      "description": "Standard terms for licensing self-hosted or on-premise software, covering the license grant and restrictions, deployment, maintenance and support, fees, and liability.",
+      "filename": "software-license-agreement.md",
+      "source": "https://github.com/CommonPaper/Software-License-Agreement"
+    }
+  ]
+}
