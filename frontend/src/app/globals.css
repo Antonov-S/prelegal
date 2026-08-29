@@ -1,14 +1,76 @@
 @import "tailwindcss";
-@plugin "@tailwindcss/typography";
 
 @theme inline {
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-source-serif);
 }
 
 body {
   color: var(--color-neutral-900);
-  background: var(--color-neutral-100);
+  background: var(--color-neutral-200);
+}
+
+/* --- The agreement ------------------------------------------------------ */
+
+/* Justified measure with hyphenation, as legal documents are typeset. */
+.mnda-justify {
+  text-align: justify;
+  hyphens: auto;
+}
+
+/*
+ * The Standard Terms arrive as HTML parsed from markdown, so they are styled by
+ * element rather than by class. Numbered clauses get a hanging indent: the
+ * numeral sits in the margin and the text block aligns under itself.
+ */
+.mnda-terms ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: clause;
+}
+
+.mnda-terms ol > li {
+  position: relative;
+  counter-increment: clause;
+  margin-top: 1.35rem;
+  padding-left: 2.5rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.mnda-terms ol > li::before {
+  content: counter(clause) ".";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.75rem;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnda-terms p {
+  margin: 0;
+}
+
+/* The licence line that closes the Standard Terms. */
+.mnda-terms > p:last-child {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-neutral-200);
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--color-neutral-500);
+  text-align: left;
+}
+
+.mnda-terms a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-neutral-300);
+  text-underline-offset: 2px;
 }
 
 /*
@@ -28,6 +90,8 @@ body {
   font-style: italic;
 }
 
+/* --- Print -------------------------------------------------------------- */
+
 @media print {
   @page {
     size: A4;
@@ -42,26 +106,32 @@ body {
   .mnda-page-break {
     break-before: page;
     border-top: 0;
-    padding-top: 0;
     margin-top: 0;
+    padding-top: 0;
   }
 
   #mnda-document {
+    max-width: none;
     padding: 0;
-    font-size: 11pt;
+    font-size: 10.5pt;
+    line-height: 1.55;
   }
 
   /* Keep headings and signature rows from splitting across sheets. */
   #mnda-document h1,
   #mnda-document h2,
-  #mnda-document h3,
-  #mnda-document tr {
+  #mnda-document tr,
+  .mnda-terms ol > li {
     break-inside: avoid;
+  }
+
+  #mnda-document h1,
+  #mnda-document h2 {
     break-after: avoid;
   }
 
   #mnda-document a {
-    text-decoration: none;
     color: inherit;
+    text-decoration: none;
   }
 }

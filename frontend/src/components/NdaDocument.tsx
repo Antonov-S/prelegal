@@ -13,7 +13,8 @@ import type { NdaValues, PartyValues } from "@/lib/mnda/values";
 
 /**
  * Signature-table rows that draw from the form. Rows absent from this map
- * ("Signature", "Date") are intentionally left blank to be completed by hand.
+ * ("Signature", "Date") are intentionally left blank, and given room to be
+ * completed by hand.
  */
 const PARTY_CELL: Record<string, (party: PartyValues) => string> = {
   "print-name": (party) => party.signatoryName,
@@ -21,6 +22,10 @@ const PARTY_CELL: Record<string, (party: PartyValues) => string> = {
   company: (party) => party.company,
   "notice-address": (party) => party.noticeAddress,
 };
+
+/** Small-caps label styling, borrowed from the UI typeface for contrast. */
+const eyebrow =
+  "font-sans text-[11px] font-semibold tracking-[0.14em] text-neutral-900 uppercase";
 
 function Value({ value }: { value: FieldValue }) {
   return (
@@ -38,18 +43,34 @@ function Options({
   selected: number;
 }) {
   return (
-    <ul className="not-prose mt-2 space-y-1.5">
+    <ul className="space-y-2">
       {options.map((option, index) => (
-        <li key={option} className="flex gap-2 text-neutral-800">
-          <span aria-hidden className="font-mono">
+        <li
+          key={option}
+          className={
+            "flex gap-3 " +
+            (index === selected ? "text-neutral-900" : "text-neutral-400")
+          }
+        >
+          <span aria-hidden className="shrink-0 font-sans text-sm leading-7">
             {index === selected ? "☒" : "☐"}
           </span>
-          <span className={index === selected ? "" : "text-neutral-400"}>
-            {option}
-          </span>
+          <span>{option}</span>
         </li>
       ))}
     </ul>
+  );
+}
+
+/** A "Governing Law: Delaware" style line inside a section. */
+function SubField({ label, value }: { label: string; value: FieldValue }) {
+  return (
+    <div className="flex flex-wrap gap-x-2">
+      <span className="font-sans text-xs tracking-wide text-neutral-500 uppercase">
+        {label}
+      </span>
+      <Value value={value} />
+    </div>
   );
 }
 
@@ -65,7 +86,7 @@ function SectionBody({
   switch (section.slug) {
     case "purpose":
       return (
-        <p>
+        <p className="mnda-justify">
           <Value value={fields.Purpose} />
         </p>
       );
@@ -103,19 +124,17 @@ function SectionBody({
 
     case "governing-law-jurisdiction":
       return (
-        <>
-          <p>
-            Governing Law: <Value value={fields["Governing Law"]} />
-          </p>
-          <p>
-            Jurisdiction: <Value value={fields.Jurisdiction} />
-          </p>
-        </>
+        <div className="space-y-2">
+          <SubField label="Governing Law" value={fields["Governing Law"]} />
+          <SubField label="Jurisdiction" value={fields.Jurisdiction} />
+        </div>
       );
 
     case "mnda-modifications":
       return values.modifications.trim() ? (
-        <p className="whitespace-pre-line">{values.modifications.trim()}</p>
+        <p className="mnda-justify whitespace-pre-line">
+          {values.modifications.trim()}
+        </p>
       ) : (
         <p>
           <span className="mnda-value mnda-unfilled">None.</span>
@@ -126,14 +145,16 @@ function SectionBody({
       return (
         <>
           {section.paragraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+            <p key={paragraph} className="mnda-justify">
+              {paragraph}
+            </p>
           ))}
         </>
       );
   }
 }
 
-function SignatureTable({
+function SignatureBlock({
   template,
   values,
 }: {
@@ -143,16 +164,16 @@ function SignatureTable({
   const parties = [values.party1, values.party2];
 
   return (
-    <table className="not-prose mt-6 w-full table-fixed border-collapse text-sm">
+    <table className="mt-8 w-full table-fixed border-collapse">
       <thead>
         <tr>
-          <th className="w-44 border border-neutral-300 bg-neutral-50 p-2 text-left font-semibold">
+          <th className="w-40 border-b-2 border-neutral-900 pb-2 text-left">
             <span className="sr-only">Field</span>
           </th>
           {template.partyHeadings.map((heading) => (
             <th
               key={heading}
-              className="border border-neutral-300 bg-neutral-50 p-2 text-center font-semibold"
+              className="border-b-2 border-neutral-900 px-4 pb-2 text-left font-sans text-[11px] font-semibold tracking-[0.2em] text-neutral-700 uppercase"
             >
               {heading}
             </th>
@@ -160,29 +181,35 @@ function SignatureTable({
         </tr>
       </thead>
       <tbody>
-        {template.signatureRows.map((row) => (
-          <tr key={row.slug}>
-            <th className="border border-neutral-300 p-2 text-left align-top font-medium">
-              {row.label}
-              {row.note ? (
-                <span className="block text-xs font-normal text-neutral-500">
-                  {row.note}
-                </span>
-              ) : null}
-            </th>
-            {parties.map((party, index) => {
-              const cell = PARTY_CELL[row.slug]?.(party).trim() ?? "";
-              return (
+        {template.signatureRows.map((row) => {
+          // Rows with nothing to fill in are left tall and empty to sign.
+          const isBlank = !(row.slug in PARTY_CELL);
+          return (
+            <tr key={row.slug} className="align-top">
+              <th
+                scope="row"
+                className={`border-b border-neutral-200 py-3 pr-4 text-left font-sans text-[11px] font-medium tracking-[0.08em] text-neutral-500 uppercase ${
+                  isBlank ? "h-16" : ""
+                }`}
+              >
+                {row.label}
+                {row.note ? (
+                  <span className="mt-1 block text-[10px] tracking-normal text-neutral-400 normal-case">
+                    {row.note}
+                  </span>
+                ) : null}
+              </th>
+              {parties.map((party, index) => (
                 <td
                   key={template.partyHeadings[index] ?? index}
-                  className="h-10 border border-neutral-300 p-2 text-center align-middle whitespace-pre-line"
+                  className="border-b border-l border-neutral-200 px-4 py-3 whitespace-pre-line"
                 >
-                  {cell}
+                  {PARTY_CELL[row.slug]?.(party).trim() ?? ""}
                 </td>
-              );
-            })}
-          </tr>
-        ))}
+              ))}
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );
@@ -202,43 +229,68 @@ export default function NdaDocument({
   return (
     <article
       id="mnda-document"
-      className="prose prose-neutral prose-headings:font-semibold max-w-none bg-white px-8 py-10 text-[15px] sm:px-12"
+      className="mx-auto max-w-[52rem] bg-white px-8 py-12 font-serif text-[15px] leading-7 text-neutral-900 sm:px-16 sm:py-16"
     >
-      <h1 className="mb-8 text-center">{coverPage.title}</h1>
+      <header className="text-center">
+        <p className="font-sans text-[11px] font-semibold tracking-[0.35em] text-neutral-500 uppercase">
+          Cover Page
+        </p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">
+          {coverPage.title}
+        </h1>
+        <div className="mt-6 border-t-2 border-neutral-900" />
+      </header>
 
-      <h2 className="text-base tracking-wide uppercase">
-        {coverPage.usingHeading}
-      </h2>
-      <p dangerouslySetInnerHTML={{ __html: coverPage.usingBodyHtml }} />
+      <section className="mt-8">
+        <h2 className={eyebrow}>{coverPage.usingHeading}</h2>
+        <p
+          className="mnda-justify mt-3 text-[14px] leading-6 text-neutral-600"
+          dangerouslySetInnerHTML={{ __html: coverPage.usingBodyHtml }}
+        />
+      </section>
 
-      {coverPage.sections.map((section) => (
-        <section key={section.slug} className="mt-6">
-          <h3 className="mb-0">{section.title}</h3>
-          {section.label ? (
-            <p className="mt-0 text-sm text-neutral-500">{section.label}</p>
-          ) : null}
-          <SectionBody section={section} values={values} fields={fields} />
-        </section>
-      ))}
+      <dl className="mt-10 border-t border-neutral-300">
+        {coverPage.sections.map((section) => (
+          <div
+            key={section.slug}
+            className="grid gap-x-10 gap-y-2 border-b border-neutral-200 py-5 sm:grid-cols-[12rem_minmax(0,1fr)]"
+          >
+            <dt>
+              <span className={eyebrow}>{section.title}</span>
+              {section.label ? (
+                <span className="mt-1 block font-sans text-xs leading-5 text-neutral-500">
+                  {section.label}
+                </span>
+              ) : null}
+            </dt>
+            <dd>
+              <SectionBody section={section} values={values} fields={fields} />
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       {coverPage.signatureIntro ? (
-        <p className="mt-8">{coverPage.signatureIntro}</p>
+        <p className="mnda-justify mt-10">{coverPage.signatureIntro}</p>
       ) : null}
-      <SignatureTable template={coverPage} values={values} />
+      <SignatureBlock template={coverPage} values={values} />
 
       <p
-        className="mt-6 text-xs text-neutral-500"
+        className="mt-8 font-sans text-[11px] leading-5 text-neutral-500"
         dangerouslySetInnerHTML={{ __html: coverPage.attributionHtml }}
       />
 
-      <div className="mnda-page-break mt-12 border-t border-neutral-200 pt-10">
-        <h2>{standardTerms.title}</h2>
+      <section className="mnda-page-break mt-16 border-t-2 border-neutral-900 pt-12">
+        <h2 className="text-center font-sans text-[11px] font-semibold tracking-[0.35em] text-neutral-500 uppercase">
+          {standardTerms.title}
+        </h2>
         <div
+          className="mnda-terms mt-8"
           dangerouslySetInnerHTML={{
             __html: fillCoverPageLinks(standardTerms.bodyHtml, fields),
           }}
         />
-      </div>
+      </section>
     </article>
   );
 }

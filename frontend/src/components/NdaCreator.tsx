@@ -23,7 +23,7 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
     }));
 
   return (
-    <div className="min-h-full bg-neutral-100 print:bg-white">
+    <div className="min-h-full bg-neutral-200 print:bg-white">
       <header className="border-b border-neutral-200 bg-white print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-4 px-6 py-4">
           <div className="mr-auto">
@@ -65,7 +65,7 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
           </p>
         </div>
 
-        <div className="rounded-lg border border-neutral-200 shadow-sm print:rounded-none print:border-0 print:shadow-none">
+        <div className="rounded-sm bg-white shadow-lg ring-1 ring-neutral-300/70 print:rounded-none print:shadow-none print:ring-0">
           <NdaDocument
             coverPage={template.coverPage}
             standardTerms={template.standardTerms}
