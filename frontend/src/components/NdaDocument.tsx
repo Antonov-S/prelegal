@@ -276,7 +276,7 @@ export default function NdaDocument({
       <SignatureBlock template={coverPage} values={values} />
 
       <p
-        className="mt-8 font-sans text-[11px] leading-5 text-neutral-500"
+        className="mnda-attribution"
         dangerouslySetInnerHTML={{ __html: coverPage.attributionHtml }}
       />
 
