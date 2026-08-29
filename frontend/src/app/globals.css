@@ -1,0 +1,67 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  color: var(--color-neutral-900);
+  background: var(--color-neutral-100);
+}
+
+/*
+ * A value spliced into the Standard Terms in place of one of the template's
+ * cover-page cross-references. Underlined so a reader can tell at a glance
+ * which words came from the form.
+ */
+.mnda-value {
+  text-decoration: underline;
+  text-decoration-color: var(--color-neutral-300);
+  text-underline-offset: 3px;
+}
+
+/* A field the user has not answered yet, shown as the template's own hint. */
+.mnda-unfilled {
+  color: var(--color-neutral-400);
+  font-style: italic;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  /* The Standard Terms start on their own sheet, as in the source documents. */
+  .mnda-page-break {
+    break-before: page;
+    border-top: 0;
+    padding-top: 0;
+    margin-top: 0;
+  }
+
+  #mnda-document {
+    padding: 0;
+    font-size: 11pt;
+  }
+
+  /* Keep headings and signature rows from splitting across sheets. */
+  #mnda-document h1,
+  #mnda-document h2,
+  #mnda-document h3,
+  #mnda-document tr {
+    break-inside: avoid;
+    break-after: avoid;
+  }
+
+  #mnda-document a {
+    text-decoration: none;
+    color: inherit;
+  }
+}

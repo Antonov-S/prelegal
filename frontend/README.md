@@ -1,0 +1,76 @@
+# Prelegal frontend — Mutual NDA creator
+
+A prototype web app (KAN-8) that turns the repository's Common Paper Mutual NDA
+templates into a completed, downloadable agreement. The user fills in a cover
+page, the document updates live beside the form, and **Download PDF** prints it.
+
+## Running it
+
+```bash
+npm install
+npm run dev     # http://localhost:3000
+```
+
+Run the commands from this directory — the app reads the agreement text from
+`../templates/` at build time, resolved relative to the working directory.
+
+```bash
+npm run build   # production build (also type-checks)
+npm run lint
+npm run start   # serve the production build
+```
+
+## How it works
+
+The agreement's wording is never restated in the UI. `src/lib/mnda/source.ts`
+reads the two markdown templates in a server component at module scope, so
+parsing happens once when the statically rendered page is built:
+
+| File | Role |
+| --- | --- |
+| `templates/mutual-nda-coverpage.md` | The fill-in cover page: section headings, `<label>` hints, the bracketed placeholders used as form placeholders, the checkbox alternatives, and the signature table. |
+| `templates/mutual-nda.md` | The Standard Terms, rendered to HTML with its `<span class="coverpage_link">` cross-reference markers left intact. |
+
+The parsed template is handed to a client component that owns the form state.
+On every keystroke, `fillCoverPageLinks` swaps those markers for the user's
+answers — so §5 reads "expires at the end of the 2-year term" rather than
+pointing back at the cover page. Values are HTML-escaped before they are spliced
+into the Standard Terms markup.
+
+Fields the user has not answered fall back to the template's own bracketed hint
+(`[Fill in state]`), shown greyed and italic, so the preview always reads as a
+plausible document.
+
+### Layout
+
+```
+src/
+  app/page.tsx              server component; loads and parses the templates
+  components/NdaCreator.tsx client shell; form state, print button, two-pane layout
+  components/NdaForm.tsx    the inputs
+  components/NdaDocument.tsx the document, and the print target
+  lib/mnda/
+    source.ts               reads ../templates (server only)
+    coverPage.ts            cover page parser
+    standardTerms.ts        standard terms parser
+    document.ts             display formatting and cross-reference filling
+    values.ts               the form's value type and empty state
+    types.ts                parsed template shapes
+```
+
+## Download
+
+**Download PDF** calls `window.print()`. The print stylesheet in
+`src/app/globals.css` hides the app chrome, drops the layout to a single column,
+sets A4 margins, and starts the Standard Terms on a fresh sheet — so the PDF
+matches the document on screen. Choosing "Save as PDF" in the browser's print
+dialog writes the file locally.
+
+## Scope
+
+This is a prototype. There is no backend, nothing is persisted, and there is no
+test suite — the parsers are pure functions and good candidates for unit tests
+when this grows past prototype stage.
+
+The templates are Common Paper's, licensed CC BY 4.0; see
+`../templates/LICENSE.txt`.
