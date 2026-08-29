@@ -66,6 +66,18 @@ sets A4 margins, and starts the Standard Terms on a fresh sheet — so the PDF
 matches the document on screen. Choosing "Save as PDF" in the browser's print
 dialog writes the file locally.
 
+Before printing, the page title is swapped for the agreement's name (and the two
+companies, once both are filled in) and restored on `afterprint`. Chrome puts
+the page title in its print header and uses it for the suggested filename, so
+this keeps the name of the tool off the document.
+
+The browser also prints its own address, date and page numbers along the page
+edge unless the person printing switches off **More settings → Headers and
+footers**. A page cannot suppress that from CSS — `@page { margin: 0 }` does
+hide it in Chrome, but only by giving up every page margin. The form links to
+the setting in its print hint. Generating the PDF in-process (jsPDF, pdf-lib)
+is the way to stop depending on it.
+
 ## Scope
 
 This is a prototype. There is no backend, nothing is persisted, and there is no
