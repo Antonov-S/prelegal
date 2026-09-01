@@ -4,7 +4,11 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  plugins: [react()],
+  // next.config.ts turns the React Compiler on, so the tests run through it
+  // too. Without this they would exercise un-memoised components while
+  // production ships compiled ones — and YearsInput adjusts state during
+  // render, which the compiler treats specially.
+  plugins: [react({ compiler: true })],
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },

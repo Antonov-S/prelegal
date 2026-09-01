@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { hintFor } from "@/lib/mnda/document";
 import type { CoverPageTemplate } from "@/lib/mnda/types";
-import type { NdaValues, PartyValues } from "@/lib/mnda/values";
+import type { Duration, NdaValues, PartyValues } from "@/lib/mnda/values";
 
 type PartyKey = "party1" | "party2";
 
@@ -93,6 +93,7 @@ function YearsInput({
   onYearsChange,
 }: {
   years: number;
+  /** Must start with the control's visible text, so the two names agree. */
   label: string;
   disabled: boolean;
   onYearsChange: (years: number) => void;
@@ -136,22 +137,18 @@ function DurationChoice({
   name,
   legend,
   hint,
-  isYears,
-  years,
+  value,
   yearsLabel,
   openEndedLabel,
-  onModeChange,
-  onYearsChange,
+  onChange,
 }: {
   name: string;
   legend: string;
   hint?: string | null;
-  isYears: boolean;
-  years: number;
+  value: Duration;
   yearsLabel: string;
   openEndedLabel: string;
-  onModeChange: (isYears: boolean) => void;
-  onYearsChange: (years: number) => void;
+  onChange: (value: Duration) => void;
 }) {
   const hintId = hint ? `${name}-hint` : undefined;
 
@@ -173,21 +170,21 @@ function DurationChoice({
             id={name + "-years"}
             type="radio"
             name={name}
-            checked={isYears}
-            onChange={() => onModeChange(true)}
+            checked={value.fixed}
+            onChange={() => onChange({ ...value, fixed: true })}
             className="size-4 accent-neutral-900"
           />
           <label htmlFor={name + "-years"} className="text-sm text-neutral-800">
             {yearsLabel}
           </label>
           <YearsInput
-            years={years}
-            label={legend + " in years"}
-            disabled={!isYears}
-            onYearsChange={onYearsChange}
+            years={value.years}
+            label={yearsLabel + ", in years"}
+            disabled={!value.fixed}
+            onYearsChange={(years) => onChange({ ...value, years })}
           />
           <span className="text-sm text-neutral-500">
-            {years === 1 ? "year" : "years"}
+            {value.years === 1 ? "year" : "years"}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -195,8 +192,8 @@ function DurationChoice({
             id={name + "-open"}
             type="radio"
             name={name}
-            checked={!isYears}
-            onChange={() => onModeChange(false)}
+            checked={!value.fixed}
+            onChange={() => onChange({ ...value, fixed: false })}
             className="size-4 accent-neutral-900"
           />
           <label htmlFor={name + "-open"} className="text-sm text-neutral-800">
@@ -340,30 +337,20 @@ export default function NdaForm({
           name="mnda-term"
           legend="MNDA term"
           hint={sectionLabel("mnda-term")}
-          isYears={values.termMode === "expires"}
-          years={values.termYears}
+          value={values.term}
           yearsLabel="Expires after"
           openEndedLabel="Continues until terminated"
-          onModeChange={(isYears) =>
-            onChange({ termMode: isYears ? "expires" : "until-terminated" })
-          }
-          onYearsChange={(termYears) => onChange({ termYears })}
+          onChange={(term) => onChange({ term })}
         />
 
         <DurationChoice
           name="term-of-confidentiality"
           legend="Term of confidentiality"
           hint={sectionLabel("term-of-confidentiality")}
-          isYears={values.confidentialityMode === "years"}
-          years={values.confidentialityYears}
+          value={values.confidentiality}
           yearsLabel="Protected for"
           openEndedLabel="In perpetuity"
-          onModeChange={(isYears) =>
-            onChange({ confidentialityMode: isYears ? "years" : "perpetuity" })
-          }
-          onYearsChange={(confidentialityYears) =>
-            onChange({ confidentialityYears })
-          }
+          onChange={(confidentiality) => onChange({ confidentiality })}
         />
 
         <Field label="Governing law" htmlFor="governing-law">

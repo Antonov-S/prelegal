@@ -5,6 +5,24 @@
  * them so the UI never has to restate legal text.
  */
 
+/**
+ * The cover-page fields the Standard Terms cross-reference, spelled exactly as
+ * the templates spell them: these strings are both the `coverpage_link` marker
+ * text in `mutual-nda.md` and the placeholder keys in the cover page. Naming
+ * them once means a rename upstream is a one-line change here rather than a
+ * search through three modules.
+ */
+export const COVER_PAGE_FIELDS = [
+  "Purpose",
+  "Effective Date",
+  "MNDA Term",
+  "Term of Confidentiality",
+  "Governing Law",
+  "Jurisdiction",
+] as const;
+
+export type CoverPageField = (typeof COVER_PAGE_FIELDS)[number];
+
 export type CoverPageSection = {
   /** Heading text as written in the template, e.g. "Term of Confidentiality". */
   title: string;
@@ -12,16 +30,8 @@ export type CoverPageSection = {
   slug: string;
   /** The `<label>` hint that follows the heading, if the section has one. */
   label: string | null;
-  /** Prose lines that are neither a label nor a checkbox option. */
-  paragraphs: string[];
   /** Checkbox alternatives, in template order. */
   options: string[];
-  /**
-   * Bracketed placeholders from the template, keyed by the line's prefix
-   * ("Governing Law") or, for a bare placeholder, by the section title.
-   * Used as input placeholders and as the hint shown for an unfilled field.
-   */
-  hints: Record<string, string>;
 };
 
 export type SignatureRow = {
@@ -36,6 +46,12 @@ export type CoverPageTemplate = {
   usingHeading: string;
   usingBodyHtml: string;
   sections: CoverPageSection[];
+  /**
+   * Bracketed placeholders from the template, keyed by the line's prefix
+   * ("Governing Law") or, for a bare placeholder, by its section title. Held
+   * flat rather than per section because every consumer looks them up by name.
+   */
+  hints: Record<string, string>;
   signatureIntro: string;
   partyHeadings: string[];
   signatureRows: SignatureRow[];
@@ -49,6 +65,8 @@ export type StandardTermsTemplate = {
    * left in place, so the client can substitute the user's answers on the fly.
    */
   bodyHtml: string;
+  /** The CC BY notice closing the terms, lifted out so it can be styled. */
+  attributionHtml: string;
 };
 
 export type MndaTemplate = {

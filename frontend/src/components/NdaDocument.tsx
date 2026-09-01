@@ -2,6 +2,8 @@ import {
   applyYears,
   coverPageLinkValues,
   fillCoverPageLinks,
+  valueClass,
+  type CoverPageFieldValues,
   type FieldValue,
 } from "@/lib/mnda/document";
 import type {
@@ -29,9 +31,7 @@ const eyebrow =
 
 function Value({ value }: { value: FieldValue }) {
   return (
-    <span className={value.filled ? "mnda-value" : "mnda-value mnda-unfilled"}>
-      {value.text}
-    </span>
+    <span className={valueClass(value.filled)}>{value.text}</span>
   );
 }
 
@@ -88,7 +88,7 @@ function SectionBody({
 }: {
   section: CoverPageSection;
   values: NdaValues;
-  fields: Record<string, FieldValue>;
+  fields: CoverPageFieldValues;
 }) {
   switch (section.slug) {
     case "purpose":
@@ -105,29 +105,21 @@ function SectionBody({
         </p>
       );
 
-    // The template lists "expires after N years" first and the open-ended
-    // alternative second, in both duration sections.
+    // Both duration sections list the fixed-term alternative first and the
+    // open-ended one second.
     case "mnda-term":
+    case "term-of-confidentiality": {
+      const duration =
+        section.slug === "mnda-term" ? values.term : values.confidentiality;
       return (
         <Options
           options={section.options.map((option, index) =>
-            index === 0 ? applyYears(option, values.termYears) : option,
+            index === 0 ? applyYears(option, duration.years) : option,
           )}
-          selected={values.termMode === "expires" ? 0 : 1}
+          selected={duration.fixed ? 0 : 1}
         />
       );
-
-    case "term-of-confidentiality":
-      return (
-        <Options
-          options={section.options.map((option, index) =>
-            index === 0
-              ? applyYears(option, values.confidentialityYears)
-              : option,
-          )}
-          selected={values.confidentialityMode === "years" ? 0 : 1}
-        />
-      );
+    }
 
     case "governing-law-jurisdiction":
       return (
@@ -148,16 +140,11 @@ function SectionBody({
         </p>
       );
 
+    // `assertRenderable` refuses to load a template carrying a section this
+    // switch does not handle, so there is no sensible fallback to render: a
+    // section reaching here would be a template change that needs form work.
     default:
-      return (
-        <>
-          {section.paragraphs.map((paragraph) => (
-            <p key={paragraph} className="mnda-justify">
-              {paragraph}
-            </p>
-          ))}
-        </>
-      );
+      return null;
   }
 }
 
@@ -297,6 +284,10 @@ export default function NdaDocument({
           dangerouslySetInnerHTML={{
             __html: fillCoverPageLinks(standardTerms.bodyHtml, fields),
           }}
+        />
+        <p
+          className="mnda-attribution"
+          dangerouslySetInnerHTML={{ __html: standardTerms.attributionHtml }}
         />
       </section>
     </article>

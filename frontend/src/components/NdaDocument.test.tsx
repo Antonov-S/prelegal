@@ -11,8 +11,8 @@ const filled: NdaValues = {
   ...emptyValues,
   purpose: "Evaluating a partnership",
   effectiveDate: "2026-03-01",
-  termYears: 2,
-  confidentialityYears: 5,
+  term: { fixed: true, years: 2 },
+  confidentiality: { fixed: true, years: 5 },
   governingLaw: "Delaware",
   jurisdiction: "New Castle, DE",
   modifications: "Section 8 is deleted.",
@@ -109,8 +109,8 @@ describe("NdaDocument, filled in", () => {
   it("moves the tick when the open-ended alternatives are chosen", () => {
     const article = renderDocument({
       ...filled,
-      termMode: "until-terminated",
-      confidentialityMode: "perpetuity",
+      term: { ...filled.term, fixed: false },
+      confidentiality: { ...filled.confidentiality, fixed: false },
     });
     expect(option(article, /Continues until terminated/).textContent).toContain(
       "☒",

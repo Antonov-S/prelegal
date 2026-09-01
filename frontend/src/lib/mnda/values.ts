@@ -7,17 +7,22 @@ export type PartyValues = {
   noticeAddress: string;
 };
 
-export type TermMode = "expires" | "until-terminated";
-export type ConfidentialityMode = "years" | "perpetuity";
+/**
+ * How long something lasts. The cover page asks this twice — for the agreement
+ * and for the confidentiality obligation — and offers the same shape of answer
+ * both times: a fixed number of years, or an open-ended alternative.
+ */
+export type Duration = {
+  fixed: boolean;
+  years: number;
+};
 
 export type NdaValues = {
   purpose: string;
   /** ISO `yyyy-mm-dd`, as produced by `<input type="date">`. */
   effectiveDate: string;
-  termMode: TermMode;
-  termYears: number;
-  confidentialityMode: ConfidentialityMode;
-  confidentialityYears: number;
+  term: Duration;
+  confidentiality: Duration;
   governingLaw: string;
   jurisdiction: string;
   modifications: string;
@@ -40,10 +45,8 @@ const emptyParty: PartyValues = {
 export const emptyValues: NdaValues = {
   purpose: "",
   effectiveDate: "",
-  termMode: "expires",
-  termYears: 1,
-  confidentialityMode: "years",
-  confidentialityYears: 1,
+  term: { fixed: true, years: 1 },
+  confidentiality: { fixed: true, years: 1 },
   governingLaw: "",
   jurisdiction: "",
   modifications: "",

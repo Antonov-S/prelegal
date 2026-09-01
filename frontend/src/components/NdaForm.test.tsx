@@ -91,35 +91,39 @@ describe("NdaForm", () => {
     const user = userEvent.setup();
     const { onChange } = renderForm();
     await user.click(screen.getByLabelText("Continues until terminated"));
-    expect(onChange).toHaveBeenCalledWith({ termMode: "until-terminated" });
+    expect(onChange).toHaveBeenCalledWith({
+      term: { fixed: false, years: 1 },
+    });
   });
 
   it("disables the years input when the duration is open-ended", () => {
     renderForm({
       ...emptyValues,
-      termMode: "until-terminated",
-      confidentialityMode: "perpetuity",
+      term: { fixed: false, years: 1 },
+      confidentiality: { fixed: false, years: 1 },
     });
-    expect(screen.getByLabelText("MNDA term in years")).toBeDisabled();
+    expect(screen.getByLabelText("Expires after, in years")).toBeDisabled();
     expect(
-      screen.getByLabelText("Term of confidentiality in years"),
+      screen.getByLabelText("Protected for, in years"),
     ).toBeDisabled();
   });
 
   it("keeps the years input enabled for a fixed term", () => {
     renderForm();
-    expect(screen.getByLabelText("MNDA term in years")).toBeEnabled();
+    expect(screen.getByLabelText("Expires after, in years")).toBeEnabled();
   });
 
   it("commits a retyped number of years", async () => {
     const user = userEvent.setup();
     const { onChange } = renderForm();
-    const years = screen.getByLabelText("MNDA term in years");
+    const years = screen.getByLabelText("Expires after, in years");
 
     await user.clear(years);
     await user.type(years, "5");
 
-    expect(onChange).toHaveBeenLastCalledWith({ termYears: 5 });
+    expect(onChange).toHaveBeenLastCalledWith({
+      term: { fixed: true, years: 5 },
+    });
   });
 
   // Coercing these to a number as they are typed is what used to make the
@@ -127,7 +131,7 @@ describe("NdaForm", () => {
   it("commits nothing for a cleared or zeroed field", async () => {
     const user = userEvent.setup();
     const { onChange } = renderForm();
-    const years = screen.getByLabelText("MNDA term in years");
+    const years = screen.getByLabelText("Expires after, in years");
 
     await user.clear(years);
     expect(onChange).not.toHaveBeenCalled();
@@ -141,22 +145,22 @@ describe("NdaForm", () => {
   it("commits nothing outside the range it advertises", async () => {
     const user = userEvent.setup();
     const { onChange } = renderForm();
-    const years = screen.getByLabelText("MNDA term in years");
+    const years = screen.getByLabelText("Expires after, in years");
 
     await user.clear(years);
     for (const outOfRange of ["100", "1e21", "2.5"]) {
       await user.clear(years);
       await user.type(years, outOfRange);
-      expect(onChange).not.toHaveBeenCalledWith(
-        expect.objectContaining({ termYears: Number(outOfRange) }),
-      );
+      expect(onChange).not.toHaveBeenCalledWith({
+        term: { fixed: true, years: Number(outOfRange) },
+      });
     }
   });
 
   it("settles back to the committed value when it loses focus", async () => {
     const user = userEvent.setup();
     renderForm();
-    const years = screen.getByLabelText("MNDA term in years");
+    const years = screen.getByLabelText("Expires after, in years");
 
     await user.clear(years);
     expect(years).toHaveValue(null);
