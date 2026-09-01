@@ -53,12 +53,23 @@ describe("NdaForm", () => {
 
   it("names the party sections after the template's columns", () => {
     renderForm();
+    expect(screen.getByRole("group", { name: "PARTY 1" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "PARTY 2" })).toBeInTheDocument();
+  });
+
+  // Help text sitting next to an input is not announced with it; lifting the
+  // template's wording out of the markdown only pays off if it is associated.
+  it("associates the template's help text with what it describes", () => {
+    renderForm();
+    expect(screen.getByLabelText("Purpose")).toHaveAccessibleDescription(
+      "How Confidential Information may be used",
+    );
     expect(
-      screen.getByRole("heading", { name: "PARTY 1" }),
-    ).toBeInTheDocument();
+      screen.getByRole("group", { name: "MNDA term" }),
+    ).toHaveAccessibleDescription("The length of this MNDA");
     expect(
-      screen.getByRole("heading", { name: "PARTY 2" }),
-    ).toBeInTheDocument();
+      screen.getAllByLabelText("Notice address")[0],
+    ).toHaveAccessibleDescription("Use either email or postal address");
   });
 
   it("reports a typed answer to its parent", async () => {
@@ -123,6 +134,23 @@ describe("NdaForm", () => {
 
     await user.type(years, "0");
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  // min/max only drive the spinner and a native validation pass this form
+  // never runs, so the range has to be enforced when the value is committed.
+  it("commits nothing outside the range it advertises", async () => {
+    const user = userEvent.setup();
+    const { onChange } = renderForm();
+    const years = screen.getByLabelText("MNDA term in years");
+
+    await user.clear(years);
+    for (const outOfRange of ["100", "1e21", "2.5"]) {
+      await user.clear(years);
+      await user.type(years, outOfRange);
+      expect(onChange).not.toHaveBeenCalledWith(
+        expect.objectContaining({ termYears: Number(outOfRange) }),
+      );
+    }
   });
 
   it("settles back to the committed value when it loses focus", async () => {

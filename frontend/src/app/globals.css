@@ -75,7 +75,7 @@ body {
   font-family: var(--font-sans);
   font-size: 0.6875rem;
   line-height: 1.5;
-  color: var(--color-neutral-400);
+  color: var(--color-neutral-500);
   text-align: left;
 }
 
@@ -96,9 +96,14 @@ body {
   text-underline-offset: 3px;
 }
 
-/* A field the user has not answered yet, shown as the template's own hint. */
+/*
+ * A field the user has not answered yet, shown as the template's own hint.
+ * neutral-500 rather than a lighter grey: this is the only rendering an
+ * unanswered field gets, so it has to clear the 4.5:1 contrast minimum. The
+ * brackets and the italic carry the "unfilled" signal, not lightness alone.
+ */
 .mnda-unfilled {
-  color: var(--color-neutral-400);
+  color: var(--color-neutral-500);
   font-style: italic;
 }
 

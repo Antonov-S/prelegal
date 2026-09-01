@@ -32,7 +32,7 @@ const FIXTURE = [
   "### Last Section",
   "Prose that belongs to the section.",
   "",
-  "Signing statement goes here.",
+  "By signing this Cover Page, the parties agree.",
   "",
   "|| SIDE A | SIDE B |",
   "|:--- | :----: | :----: |",
@@ -106,7 +106,9 @@ describe("parseCoverPage", () => {
   // The signing statement sits between the last section and the table with no
   // heading of its own, so it would otherwise be read as section prose.
   it("lifts the signing statement out of the final section", () => {
-    expect(template.signatureIntro).toBe("Signing statement goes here.");
+    expect(template.signatureIntro).toBe(
+      "By signing this Cover Page, the parties agree.",
+    );
     expect(template.sections[3].paragraphs).toEqual([
       "Prose that belongs to the section.",
     ]);
@@ -145,6 +147,14 @@ describe("parseCoverPage", () => {
         ["# Title", "", "## Using", "", "| a | b |"].join("\n"),
       ),
     ).toThrow(/no fill-in sections/i);
+  });
+
+  // Losing this sentence would produce an agreement with no execution clause,
+  // so it has to fail rather than render without one.
+  it("rejects a template whose signing statement has gone missing", () => {
+    expect(() =>
+      parseCoverPage(FIXTURE.replace(/^By signing.*$/m, "Some other closing.")),
+    ).toThrow(/signing statement/i);
   });
 });
 

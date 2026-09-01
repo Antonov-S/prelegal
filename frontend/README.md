@@ -11,8 +11,9 @@ npm install
 npm run dev     # http://localhost:3000
 ```
 
-Run the commands from this directory — the app reads the agreement text from
-`../templates/` at build time, resolved relative to the working directory.
+The app reads the agreement text from the repository's `templates/` at build
+time, found by walking up from the working directory — so a build started from
+the repository root works too.
 
 ```bash
 npm run build   # production build (also type-checks)
@@ -26,6 +27,15 @@ npm run start   # serve the production build
 The agreement's wording is never restated in the UI. `src/lib/mnda/source.ts`
 reads the two markdown templates in a server component at module scope, so
 parsing happens once when the statically rendered page is built:
+
+`loadMndaTemplate` then checks what it parsed against what this app can render
+— the six cover-page sections and exactly two parties — and throws if they do
+not match. An upstream heading rename would otherwise leave a section blank
+while the Standard Terms went on citing it, producing a cover page that
+contradicts its own agreement. The same reasoning applies to the signing
+statement, which `parseCoverPage` locates by its wording rather than by its
+position, so a template that stops carrying it fails the build instead of
+yielding an agreement with no execution clause.
 
 | File | Role |
 | --- | --- |
@@ -78,6 +88,15 @@ footers**. A page cannot suppress that from CSS — `@page { margin: 0 }` does
 hide it in Chrome, but only by giving up every page margin. The form links to
 the setting in its print hint. Generating the PDF in-process (jsPDF, pdf-lib)
 is the way to stop depending on it.
+
+### Deploying
+
+`next.config.ts` pins `outputFileTracingRoot` to the repository and names
+`../templates/**/*.md` in `outputFileTracingIncludes`. The read path is
+assembled at runtime, so Next's file tracing cannot infer it; without those two
+lines a standalone build ships without the agreement's wording and fails at
+startup. With them, `.next/standalone/` holds `frontend/` and `templates/` side
+by side.
 
 ## Testing
 

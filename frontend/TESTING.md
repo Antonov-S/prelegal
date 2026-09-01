@@ -9,7 +9,7 @@ npm run lint
 npm run build     # type-checks as part of the build
 ```
 
-79 tests across six files. They run against the **real** templates in
+90 tests across seven files. They run against the **real** templates in
 `../templates/`, not fixtures, so a change to the source markdown that the
 parsers cannot handle fails the suite.
 
@@ -17,6 +17,7 @@ parsers cannot handle fails the suite.
 | --- | --- |
 | `src/lib/mnda/coverPage.test.ts` | The cover-page parser, against a synthetic CRLF fixture exercising every shape (labels, bare and prefixed placeholders, checkbox options, the signature table, the signing statement that has no heading of its own) and against the real template. Includes the three malformed-template errors. |
 | `src/lib/mnda/standardTerms.test.ts` | Title extraction, markdown rendering, and that the ten `coverpage_link` markers survive parsing — losing them would silently leave the agreement citing a cover page instead of real values. |
+| `src/lib/mnda/source.test.ts` | The load-time contract: that a renamed cover-page section or a template naming other than two parties fails the build rather than rendering an empty row while the Standard Terms go on citing it. |
 | `src/lib/mnda/document.test.ts` | Year pluralisation, time-zone-safe date formatting, placeholder lookup, and the phrasing of all six cross-references in both their fixed and open-ended forms. Includes the escaping check: markup typed into a field must arrive as text, since the result goes through `dangerouslySetInnerHTML`. |
 | `src/components/NdaDocument.test.tsx` | What the document renders for empty and filled values: placeholder fallbacks, which checkbox is ticked, the eleven clauses, each party's signature column, and the rows deliberately left blank to sign. |
 | `src/components/NdaForm.test.tsx` | That labels, help text and placeholders come from the template rather than hardcoded copy; the years field's editing behaviour. |
@@ -56,7 +57,9 @@ brackets, and the document should still be a coherent, complete agreement.
 - [ ] The agreement is set in a serif face; the form and header are not.
 - [ ] The cover page reads as a term sheet — field names in the left column,
       answers beside them, ruled between rows.
-- [ ] Unanswered fields are visibly muted against answered ones.
+- [ ] Unanswered fields are visibly muted against answered ones — but still
+      legible: they and the attribution footers should clear 4.5:1 against
+      white.
 - [ ] Values substituted into the Standard Terms are underlined, so it is clear
       which words came from the form.
 - [ ] The attribution footers are quiet: small, grey, links not underlined.
@@ -73,9 +76,12 @@ brackets, and the document should still be a coherent, complete agreement.
 
 - [ ] Every field is reachable by Tab, in a sensible order, with a visible focus
       ring.
-- [ ] Each input is announced with its label and its help text.
+- [ ] Each input is announced with its label and its help text (automated, but
+      worth hearing once in a real screen reader).
 - [ ] The duration radio groups can be operated with arrow keys, and the years
       field is skipped when its alternative is not selected.
+- [ ] In the document, a screen reader distinguishes the chosen alternative from
+      the one not chosen, in both duration sections.
 - [ ] A screen reader reads the signature block as a table with the party names
       as column headers.
 
@@ -88,13 +94,20 @@ depends on the browser's print implementation:
 - [ ] Firefox — print settings live under Page Setup → Margins & Header/Footer.
 - [ ] Safari, if you have it — check the page break in particular.
 
-### 6. The templates are the source of truth
+### 6. Deployment
+
+- [ ] `npm --prefix frontend run build` from the repository root succeeds — the
+      templates are found by walking up, not by assuming the working directory.
+- [ ] If you deploy with `output: "standalone"`, confirm `templates/` lands
+      beside `frontend/` in `.next/standalone/`.
+
+### 7. The templates are the source of truth
 
 - [ ] Edit a heading or a `<label>` in `../templates/mutual-nda-coverpage.md`,
       restart the dev server, and confirm the change appears in both the form
       and the document.
 - [ ] Restore the file afterwards.
 
-### 7. Console
+### 8. Console
 
 - [ ] No errors or hydration warnings on load or while typing.

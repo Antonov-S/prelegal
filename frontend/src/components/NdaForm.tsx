@@ -10,8 +10,13 @@ type PartyKey = "party1" | "party2";
 
 const inputClass =
   "w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 " +
-  "placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:outline-none";
+  "placeholder:text-neutral-500 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 focus:outline-none";
 
+/**
+ * A titled group of fields. The `legend` is styled directly rather than paired
+ * with a visually identical heading, which would have a screen reader announce
+ * the group's name twice.
+ */
 function Fieldset({
   legend,
   children,
@@ -21,15 +26,19 @@ function Fieldset({
 }) {
   return (
     <fieldset className="border-t border-neutral-200 pt-6">
-      <legend className="sr-only">{legend}</legend>
-      <h2 className="text-sm font-semibold tracking-wide text-neutral-900 uppercase">
+      <legend className="text-sm font-semibold tracking-wide text-neutral-900 uppercase">
         {legend}
-      </h2>
+      </legend>
       <div className="mt-4 space-y-4">{children}</div>
     </fieldset>
   );
 }
 
+/**
+ * A labelled field. The template's help text is only useful if it is announced
+ * with the input, so the hint gets an id and the caller attaches it — hence the
+ * render prop rather than plain children.
+ */
 function Field({
   label,
   hint,
@@ -39,8 +48,10 @@ function Field({
   label: string;
   hint?: string | null;
   htmlFor: string;
-  children: ReactNode;
+  children: (describedBy: string | undefined) => ReactNode;
 }) {
+  const hintId = hint ? `${htmlFor}-hint` : undefined;
+
   return (
     <div>
       <label
@@ -49,11 +60,18 @@ function Field({
       >
         {label}
       </label>
-      {hint ? <p className="mt-0.5 text-xs text-neutral-500">{hint}</p> : null}
-      <div className="mt-1.5">{children}</div>
+      {hint ? (
+        <p id={hintId} className="mt-0.5 text-xs text-neutral-500">
+          {hint}
+        </p>
+      ) : null}
+      <div className="mt-1.5">{children(hintId)}</div>
     </div>
   );
 }
+
+const MIN_YEARS = 1;
+const MAX_YEARS = 99;
 
 /**
  * A number of years, held as text while it is being edited.
@@ -63,6 +81,10 @@ function Field({
  * land after that 1. So the draft is free to be empty or nonsensical, only a
  * usable number is passed up, and the field settles back to the committed value
  * when it loses focus.
+ *
+ * The range is enforced here rather than left to `min`/`max`, which only drive
+ * the spinner and a native validation pass this form never runs. Without it a
+ * pasted "1e21" reaches the agreement as "1e+21 years".
  */
 function YearsInput({
   years,
@@ -87,16 +109,20 @@ function YearsInput({
   return (
     <input
       type="number"
-      min={1}
-      max={99}
+      min={MIN_YEARS}
+      max={MAX_YEARS}
       value={draft}
       disabled={disabled}
       aria-label={label}
       onChange={(event) => {
         setDraft(event.target.value);
         const parsed = Number(event.target.value);
-        if (Number.isFinite(parsed) && parsed >= 1) {
-          onYearsChange(Math.floor(parsed));
+        if (
+          Number.isInteger(parsed) &&
+          parsed >= MIN_YEARS &&
+          parsed <= MAX_YEARS
+        ) {
+          onYearsChange(parsed);
         }
       }}
       onBlur={() => setDraft(String(years))}
@@ -127,12 +153,20 @@ function DurationChoice({
   onModeChange: (isYears: boolean) => void;
   onYearsChange: (years: number) => void;
 }) {
+  const hintId = hint ? `${name}-hint` : undefined;
+
   return (
-    <fieldset>
+    // Describing the group rather than each radio announces the help text once,
+    // as focus enters the group.
+    <fieldset aria-describedby={hintId}>
       <legend className="block text-sm font-medium text-neutral-900">
         {legend}
       </legend>
-      {hint ? <p className="mt-0.5 text-xs text-neutral-500">{hint}</p> : null}
+      {hint ? (
+        <p id={hintId} className="mt-0.5 text-xs text-neutral-500">
+          {hint}
+        </p>
+      ) : null}
       <div className="mt-2 space-y-2">
         <div className="flex items-center gap-2">
           <input
@@ -190,48 +224,62 @@ function PartyFields({
   return (
     <Fieldset legend={heading}>
       <Field label="Company" htmlFor={partyKey + "-company"}>
-        <input
-          id={partyKey + "-company"}
-          type="text"
-          value={party.company}
-          placeholder="Acme, Inc."
-          onChange={(event) => onChange({ company: event.target.value })}
-          className={inputClass}
-        />
+        {(describedBy) => (
+          <input
+            id={partyKey + "-company"}
+            type="text"
+            value={party.company}
+            placeholder="Acme, Inc."
+            aria-describedby={describedBy}
+            onChange={(event) => onChange({ company: event.target.value })}
+            className={inputClass}
+          />
+        )}
       </Field>
       <Field label="Print name" htmlFor={partyKey + "-name"}>
-        <input
-          id={partyKey + "-name"}
-          type="text"
-          value={party.signatoryName}
-          placeholder="Name of the person signing"
-          onChange={(event) => onChange({ signatoryName: event.target.value })}
-          className={inputClass}
-        />
+        {(describedBy) => (
+          <input
+            id={partyKey + "-name"}
+            type="text"
+            value={party.signatoryName}
+            placeholder="Name of the person signing"
+            aria-describedby={describedBy}
+            onChange={(event) => onChange({ signatoryName: event.target.value })}
+            className={inputClass}
+          />
+        )}
       </Field>
       <Field label="Title" htmlFor={partyKey + "-title"}>
-        <input
-          id={partyKey + "-title"}
-          type="text"
-          value={party.signatoryTitle}
-          placeholder="Chief Executive Officer"
-          onChange={(event) => onChange({ signatoryTitle: event.target.value })}
-          className={inputClass}
-        />
+        {(describedBy) => (
+          <input
+            id={partyKey + "-title"}
+            type="text"
+            value={party.signatoryTitle}
+            placeholder="Chief Executive Officer"
+            aria-describedby={describedBy}
+            onChange={(event) =>
+              onChange({ signatoryTitle: event.target.value })
+            }
+            className={inputClass}
+          />
+        )}
       </Field>
       <Field
         label="Notice address"
         hint={noticeAddressNote}
         htmlFor={partyKey + "-notice"}
       >
-        <textarea
-          id={partyKey + "-notice"}
-          rows={2}
-          value={party.noticeAddress}
-          placeholder="legal@acme.com"
-          onChange={(event) => onChange({ noticeAddress: event.target.value })}
-          className={inputClass}
-        />
+        {(describedBy) => (
+          <textarea
+            id={partyKey + "-notice"}
+            rows={2}
+            value={party.noticeAddress}
+            placeholder="legal@acme.com"
+            aria-describedby={describedBy}
+            onChange={(event) => onChange({ noticeAddress: event.target.value })}
+            className={inputClass}
+          />
+        )}
       </Field>
     </Fieldset>
   );
@@ -260,24 +308,32 @@ export default function NdaForm({
     <form className="space-y-6" onSubmit={(event) => event.preventDefault()}>
       <Fieldset legend="Agreement details">
         <Field label="Purpose" hint={sectionLabel("purpose")} htmlFor="purpose">
-          <textarea
-            id="purpose"
-            rows={3}
-            value={values.purpose}
-            placeholder={hintFor(template, "Purpose")}
-            onChange={(event) => onChange({ purpose: event.target.value })}
-            className={inputClass}
-          />
+          {(describedBy) => (
+            <textarea
+              id="purpose"
+              rows={3}
+              value={values.purpose}
+              placeholder={hintFor(template, "Purpose")}
+              aria-describedby={describedBy}
+              onChange={(event) => onChange({ purpose: event.target.value })}
+              className={inputClass}
+            />
+          )}
         </Field>
 
         <Field label="Effective date" htmlFor="effective-date">
-          <input
-            id="effective-date"
-            type="date"
-            value={values.effectiveDate}
-            onChange={(event) => onChange({ effectiveDate: event.target.value })}
-            className={inputClass}
-          />
+          {(describedBy) => (
+            <input
+              id="effective-date"
+              type="date"
+              value={values.effectiveDate}
+              aria-describedby={describedBy}
+              onChange={(event) =>
+                onChange({ effectiveDate: event.target.value })
+              }
+              className={inputClass}
+            />
+          )}
         </Field>
 
         <DurationChoice
@@ -311,25 +367,35 @@ export default function NdaForm({
         />
 
         <Field label="Governing law" htmlFor="governing-law">
-          <input
-            id="governing-law"
-            type="text"
-            value={values.governingLaw}
-            placeholder={hintFor(template, "Governing Law")}
-            onChange={(event) => onChange({ governingLaw: event.target.value })}
-            className={inputClass}
-          />
+          {(describedBy) => (
+            <input
+              id="governing-law"
+              type="text"
+              value={values.governingLaw}
+              placeholder={hintFor(template, "Governing Law")}
+              aria-describedby={describedBy}
+              onChange={(event) =>
+                onChange({ governingLaw: event.target.value })
+              }
+              className={inputClass}
+            />
+          )}
         </Field>
 
         <Field label="Jurisdiction" htmlFor="jurisdiction">
-          <input
-            id="jurisdiction"
-            type="text"
-            value={values.jurisdiction}
-            placeholder={hintFor(template, "Jurisdiction")}
-            onChange={(event) => onChange({ jurisdiction: event.target.value })}
-            className={inputClass}
-          />
+          {(describedBy) => (
+            <input
+              id="jurisdiction"
+              type="text"
+              value={values.jurisdiction}
+              placeholder={hintFor(template, "Jurisdiction")}
+              aria-describedby={describedBy}
+              onChange={(event) =>
+                onChange({ jurisdiction: event.target.value })
+              }
+              className={inputClass}
+            />
+          )}
         </Field>
 
         <Field
@@ -337,13 +403,18 @@ export default function NdaForm({
           hint="Leave blank to use the standard terms unchanged."
           htmlFor="modifications"
         >
-          <textarea
-            id="modifications"
-            rows={2}
-            value={values.modifications}
-            onChange={(event) => onChange({ modifications: event.target.value })}
-            className={inputClass}
-          />
+          {(describedBy) => (
+            <textarea
+              id="modifications"
+              rows={2}
+              value={values.modifications}
+              aria-describedby={describedBy}
+              onChange={(event) =>
+                onChange({ modifications: event.target.value })
+              }
+              className={inputClass}
+            />
+          )}
         </Field>
       </Fieldset>
 

@@ -11,6 +11,13 @@ const PREFIXED_HINT = /^(.+?):\s*\[(.+)\]$/;
 const TABLE_LINE = /^\|/;
 /** The `|:--- | :----: |` alignment row of a markdown table. */
 const TABLE_DIVIDER = /^\|[\s:|-]+$/;
+/**
+ * The execution clause, which sits between the last section and the signature
+ * table with no heading of its own. Matching it by wording rather than by
+ * position means a template that stops carrying it fails loudly here, instead
+ * of quietly producing an agreement nobody has agreed to.
+ */
+const SIGNING_STATEMENT = /^By signing/i;
 
 export function slugify(value: string): string {
   return value
@@ -153,14 +160,21 @@ export function parseCoverPage(markdown: string): CoverPageTemplate {
   // The signing statement trails the last section, separated by a blank line.
   const lastStart = sectionStarts[sectionStarts.length - 1];
   const lastBlocks = toBlocks(lines.slice(lastStart + 1, tableStart));
-  const signatureIntro =
-    lastBlocks.length > 1 ? lastBlocks[lastBlocks.length - 1].join(" ") : "";
-  if (signatureIntro) {
-    const last = sections[sections.length - 1];
-    last.paragraphs = last.paragraphs.filter(
-      (paragraph) => !signatureIntro.includes(paragraph),
+  const closing = lastBlocks[lastBlocks.length - 1] ?? [];
+  const signatureIntro = closing.join(" ");
+  if (!SIGNING_STATEMENT.test(signatureIntro)) {
+    throw new Error(
+      "Cover page template has no signing statement before its signature " +
+        'table: expected a paragraph beginning "By signing".',
     );
   }
+  // Remove it from the section it was parsed into, matching the lines exactly
+  // rather than by substring, which would take any line it happens to contain.
+  const closingLines = new Set(closing);
+  const last = sections[sections.length - 1];
+  last.paragraphs = last.paragraphs.filter(
+    (paragraph) => !closingLines.has(paragraph),
+  );
 
   const { partyHeadings, rows } = parseSignatureTable(
     lines.slice(tableStart, tableEnd + 1).map((line) => line.trim()),

@@ -42,6 +42,13 @@ describe("formatEffectiveDate", () => {
     expect(formatEffectiveDate("2026-01-01")).toContain("January 1");
   });
 
+  // new Date(y, m, d) maps years 0-99 onto 1900-1999, and a date input will
+  // hand over "0025-03-01" if someone types a two-digit year.
+  it("does not push a two-digit year into the twentieth century", () => {
+    expect(formatEffectiveDate("0025-03-01")).toBe("March 1, 25");
+    expect(formatEffectiveDate("0099-01-01")).toBe("January 1, 99");
+  });
+
   it("returns nothing for an unset or malformed date", () => {
     expect(formatEffectiveDate("")).toBe("");
     expect(formatEffectiveDate("01/03/2026")).toBe("");

@@ -143,6 +143,18 @@ describe("NdaDocument, filled in", () => {
     }
   });
 
+  // The glyph is aria-hidden and the only other difference is colour, so
+  // without this the two alternatives are indistinguishable to a screen reader.
+  it("says which alternative was chosen, in words", () => {
+    const article = renderDocument(filled);
+    expect(option(article, /Expires 2 years from/).textContent).toContain(
+      "Selected:",
+    );
+    expect(
+      option(article, /Continues until terminated/).textContent,
+    ).toContain("Not selected:");
+  });
+
   it("names both parties as columns", () => {
     const article = renderDocument(filled);
     expect(
@@ -164,6 +176,14 @@ describe("NdaDocument's Standard Terms", () => {
     expect(article.innerHTML).toContain(
       'laws of the State of <span class="mnda-value">Delaware</span>',
     );
+  });
+
+  it("leaves the page a single h1, which the app chrome owns", () => {
+    const article = renderDocument(filled);
+    expect(within(article).queryByRole("heading", { level: 1 })).toBeNull();
+    expect(
+      within(article).getByRole("heading", { level: 2, name: article.getAttribute("aria-label")! }),
+    ).toBeInTheDocument();
   });
 
   it("renders the clauses as a list, for the hanging indents to hook", () => {

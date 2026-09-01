@@ -49,13 +49,20 @@ function Options({
           key={option}
           className={
             "flex gap-3 " +
-            (index === selected ? "text-neutral-900" : "text-neutral-400")
+            (index === selected ? "text-neutral-900" : "text-neutral-500")
           }
         >
           <span aria-hidden className="shrink-0 font-sans text-sm leading-7">
             {index === selected ? "☒" : "☐"}
           </span>
-          <span>{option}</span>
+          <span>
+            {/* The glyph is decorative, and colour alone cannot carry which
+                alternative the parties chose. */}
+            <span className="sr-only">
+              {index === selected ? "Selected: " : "Not selected: "}
+            </span>
+            {option}
+          </span>
         </li>
       ))}
     </ul>
@@ -194,7 +201,7 @@ function SignatureBlock({
               >
                 {row.label}
                 {row.note ? (
-                  <span className="mt-1 block text-[10px] tracking-normal text-neutral-400 normal-case">
+                  <span className="mt-1 block text-[10px] tracking-normal text-neutral-500 normal-case">
                     {row.note}
                   </span>
                 ) : null}
@@ -229,20 +236,21 @@ export default function NdaDocument({
   return (
     <article
       id="mnda-document"
+      aria-label={coverPage.title}
       className="mx-auto max-w-[52rem] bg-white px-8 py-12 font-serif text-[15px] leading-7 text-neutral-900 sm:px-16 sm:py-16"
     >
       <header className="text-center">
         <p className="font-sans text-[11px] font-semibold tracking-[0.35em] text-neutral-500 uppercase">
           Cover Page
         </p>
-        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-balance">
+        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-balance">
           {coverPage.title}
-        </h1>
+        </h2>
         <div className="mt-6 border-t-2 border-neutral-900" />
       </header>
 
       <section className="mt-8">
-        <h2 className={eyebrow}>{coverPage.usingHeading}</h2>
+        <h3 className={eyebrow}>{coverPage.usingHeading}</h3>
         <p
           className="mnda-justify mt-3 text-[14px] leading-6 text-neutral-600"
           dangerouslySetInnerHTML={{ __html: coverPage.usingBodyHtml }}
@@ -281,9 +289,9 @@ export default function NdaDocument({
       />
 
       <section className="mnda-page-break mt-16 border-t-2 border-neutral-900 pt-12">
-        <h2 className="text-center font-sans text-[11px] font-semibold tracking-[0.35em] text-neutral-500 uppercase">
+        <h3 className="text-center font-sans text-[11px] font-semibold tracking-[0.35em] text-neutral-500 uppercase">
           {standardTerms.title}
-        </h2>
+        </h3>
         <div
           className="mnda-terms mt-8"
           dangerouslySetInnerHTML={{

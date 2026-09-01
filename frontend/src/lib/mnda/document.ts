@@ -34,10 +34,15 @@ export function formatEffectiveDate(isoDate: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
   if (!match) return "";
   const [, year, month, day] = match;
-  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString(
-    "en-US",
-    { year: "numeric", month: "long", day: "numeric" },
-  );
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  // The Date constructor maps years 0-99 onto 1900-1999, and a date input will
+  // hand us "0025-03-01" if someone types a two-digit year. Put the year back.
+  date.setFullYear(Number(year));
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 /** Looks up a bracketed placeholder from the template by its label. */
