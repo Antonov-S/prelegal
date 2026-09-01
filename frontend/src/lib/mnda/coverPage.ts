@@ -1,5 +1,4 @@
-import { marked } from "marked";
-
+import { findTitle, inlineHtml, toLines } from "./markdown";
 import type { CoverPageSection, CoverPageTemplate, SignatureRow } from "./types";
 
 const LABEL_LINE = /^<label>(.*)<\/label>$/;
@@ -26,37 +25,45 @@ export function slugify(value: string): string {
     .replace(/^-|-$/g, "");
 }
 
-function inlineHtml(markdown: string): string {
-  return marked.parseInline(markdown, { async: false });
+/** The `[start, end)` of the last blank-line-delimited block before `end`. */
+function lastBlockBefore(lines: string[], end: number): [number, number] {
+  let blockEnd = end;
+  while (blockEnd > 0 && lines[blockEnd - 1].trim() === "") blockEnd -= 1;
+
+  let blockStart = blockEnd;
+  while (blockStart > 0 && lines[blockStart - 1].trim() !== "") blockStart -= 1;
+
+  return [blockStart, blockEnd];
 }
 
-/** Splits on blank lines, dropping empty blocks. */
-function toBlocks(lines: string[]): string[][] {
-  const blocks: string[][] = [];
-  let current: string[] = [];
-  for (const line of lines) {
-    if (line.trim() === "") {
-      if (current.length > 0) blocks.push(current);
-      current = [];
-    } else {
-      current.push(line.trim());
-    }
-  }
-  if (current.length > 0) blocks.push(current);
-  return blocks;
+function textOf(lines: string[]): string {
+  return lines
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join(" ");
 }
 
-function parseSection(title: string, blocks: string[][]): CoverPageSection {
+/**
+ * Reads one `###` section. Every line is either the section's `<label>` hint, a
+ * checkbox alternative, or a bracketed placeholder; anything else is an
+ * instruction to whoever fills the form in, which the app phrases itself.
+ */
+function parseSection(
+  title: string,
+  lines: string[],
+  hints: Record<string, string>,
+): CoverPageSection {
   const section: CoverPageSection = {
     title,
     slug: slugify(title),
     label: null,
-    paragraphs: [],
     options: [],
-    hints: {},
   };
 
-  for (const line of blocks.flat()) {
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+
     const label = LABEL_LINE.exec(line);
     if (label) {
       section.label = label[1];
@@ -71,17 +78,12 @@ function parseSection(title: string, blocks: string[][]): CoverPageSection {
 
     const bare = BARE_HINT.exec(line);
     if (bare) {
-      section.hints[title] = bare[1];
+      hints[title] = bare[1];
       continue;
     }
 
     const prefixed = PREFIXED_HINT.exec(line);
-    if (prefixed) {
-      section.hints[prefixed[1].trim()] = prefixed[2];
-      continue;
-    }
-
-    section.paragraphs.push(line);
+    if (prefixed) hints[prefixed[1].trim()] = prefixed[2];
   }
 
   return section;
@@ -118,12 +120,13 @@ function parseSignatureTable(lines: string[]): {
  * Parses `templates/mutual-nda-coverpage.md`.
  *
  * The file's structure is: an `#` title, a `##` "using this agreement"
- * preamble, a run of `###` fill-in sections, then a signature table followed by
- * the licence attribution. The paragraph immediately before the table is the
- * signing statement, which the parser lifts out of the final section.
+ * preamble, a run of `###` fill-in sections, the signing statement, then a
+ * signature table followed by the licence attribution. The signing statement
+ * has no heading of its own, so it is found as the last paragraph before the
+ * table and the final section is read as ending where it begins.
  */
 export function parseCoverPage(markdown: string): CoverPageTemplate {
-  const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+  const lines = toLines(markdown);
 
   const tableStart = lines.findIndex((line) => TABLE_LINE.test(line));
   if (tableStart === -1) {
@@ -134,9 +137,9 @@ export function parseCoverPage(markdown: string): CoverPageTemplate {
     tableEnd += 1;
   }
 
-  const title = lines.find((line) => line.startsWith("# "))?.slice(2).trim();
+  const heading = findTitle(lines);
   const usingIndex = lines.findIndex((line) => line.startsWith("## "));
-  if (!title || usingIndex === -1) {
+  if (!heading || usingIndex === -1) {
     throw new Error("Cover page template is missing its title or preamble.");
   }
 
@@ -148,52 +151,39 @@ export function parseCoverPage(markdown: string): CoverPageTemplate {
     throw new Error("Cover page template has no fill-in sections.");
   }
 
-  const usingBody = toBlocks(lines.slice(usingIndex + 1, sectionStarts[0]));
-  const sections = sectionStarts.map((start, index) => {
-    const end = sectionStarts[index + 1] ?? tableStart;
-    return parseSection(
-      lines[start].slice(4).trim(),
-      toBlocks(lines.slice(start + 1, end)),
-    );
-  });
-
-  // The signing statement trails the last section, separated by a blank line.
-  const lastStart = sectionStarts[sectionStarts.length - 1];
-  const lastBlocks = toBlocks(lines.slice(lastStart + 1, tableStart));
-  const closing = lastBlocks[lastBlocks.length - 1] ?? [];
-  const signatureIntro = closing.join(" ");
+  const [introStart, introEnd] = lastBlockBefore(lines, tableStart);
+  const signatureIntro = textOf(lines.slice(introStart, introEnd));
   if (!SIGNING_STATEMENT.test(signatureIntro)) {
     throw new Error(
       "Cover page template has no signing statement before its signature " +
         'table: expected a paragraph beginning "By signing".',
     );
   }
-  // Remove it from the section it was parsed into, matching the lines exactly
-  // rather than by substring, which would take any line it happens to contain.
-  const closingLines = new Set(closing);
-  const last = sections[sections.length - 1];
-  last.paragraphs = last.paragraphs.filter(
-    (paragraph) => !closingLines.has(paragraph),
+
+  const hints: Record<string, string> = {};
+  const sections = sectionStarts.map((start, index) =>
+    parseSection(
+      lines[start].slice(4).trim(),
+      lines.slice(start + 1, sectionStarts[index + 1] ?? introStart),
+      hints,
+    ),
   );
 
   const { partyHeadings, rows } = parseSignatureTable(
     lines.slice(tableStart, tableEnd + 1).map((line) => line.trim()),
   );
 
-  const attribution = lines
-    .slice(tableEnd + 1)
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .join(" ");
-
   return {
-    title,
+    title: heading.title,
     usingHeading: lines[usingIndex].slice(3).trim(),
-    usingBodyHtml: inlineHtml(usingBody.flat().join(" ")),
+    usingBodyHtml: inlineHtml(
+      textOf(lines.slice(usingIndex + 1, sectionStarts[0])),
+    ),
     sections,
+    hints,
     signatureIntro,
     partyHeadings,
     signatureRows: rows,
-    attributionHtml: inlineHtml(attribution),
+    attributionHtml: inlineHtml(textOf(lines.slice(tableEnd + 1))),
   };
 }

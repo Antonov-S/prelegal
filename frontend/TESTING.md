@@ -9,9 +9,11 @@ npm run lint
 npm run build     # type-checks as part of the build
 ```
 
-90 tests across seven files. They run against the **real** templates in
+91 tests across seven files. They run against the **real** templates in
 `../templates/`, not fixtures, so a change to the source markdown that the
-parsers cannot handle fails the suite.
+parsers cannot handle fails the suite. They also run through the React
+Compiler, as `next build` does, so the components under test are the ones that
+ship.
 
 | File | Covers |
 | --- | --- |

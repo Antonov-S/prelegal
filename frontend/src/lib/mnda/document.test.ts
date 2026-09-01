@@ -17,8 +17,8 @@ const filled: NdaValues = {
   ...emptyValues,
   purpose: "Evaluating a partnership",
   effectiveDate: "2026-03-01",
-  termYears: 2,
-  confidentialityYears: 5,
+  term: { fixed: true, years: 2 },
+  confidentiality: { fixed: true, years: 5 },
   governingLaw: "Delaware",
   jurisdiction: "New Castle, DE",
 };
@@ -102,8 +102,8 @@ describe("coverPageLinkValues", () => {
   it("phrases the open-ended alternatives", () => {
     const fields = coverPageLinkValues(coverPage, {
       ...filled,
-      termMode: "until-terminated",
-      confidentialityMode: "perpetuity",
+      term: { ...filled.term, fixed: false },
+      confidentiality: { ...filled.confidentiality, fixed: false },
     });
     expect(fields["MNDA Term"].text).toBe(
       "term, which continues until terminated",

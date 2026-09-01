@@ -1,4 +1,8 @@
-import type { CoverPageTemplate } from "./types";
+import {
+  COVER_PAGE_FIELDS,
+  type CoverPageField,
+  type CoverPageTemplate,
+} from "./types";
 import type { NdaValues } from "./values";
 
 /**
@@ -7,6 +11,8 @@ import type { NdaValues } from "./values";
  * hint, which the document renders in the muted "unfilled" style.
  */
 export type FieldValue = { text: string; filled: boolean };
+
+export type CoverPageFieldValues = Record<CoverPageField, FieldValue>;
 
 const COVERPAGE_LINK = /<span class="coverpage_link">([^<]*)<\/span>/g;
 
@@ -21,6 +27,15 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"]/g, (char) => HTML_ESCAPES[char]);
 }
 
+/**
+ * How a value is styled wherever it appears. Shared because the cover page
+ * renders values as JSX and the Standard Terms as an HTML string, and the two
+ * have to look alike.
+ */
+export function valueClass(filled: boolean): string {
+  return filled ? "mnda-value" : "mnda-value mnda-unfilled";
+}
+
 export function formatYears(years: number): string {
   return `${years} ${years === 1 ? "year" : "years"}`;
 }
@@ -33,6 +48,7 @@ export function formatYears(years: number): string {
 export function formatEffectiveDate(isoDate: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
   if (!match) return "";
+
   const [, year, month, day] = match;
   const date = new Date(Number(year), Number(month) - 1, Number(day));
   // The Date constructor maps years 0-99 onto 1900-1999, and a date input will
@@ -47,10 +63,7 @@ export function formatEffectiveDate(isoDate: string): string {
 
 /** Looks up a bracketed placeholder from the template by its label. */
 export function hintFor(template: CoverPageTemplate, key: string): string {
-  for (const section of template.sections) {
-    if (key in section.hints) return section.hints[key];
-  }
-  return key;
+  return template.hints[key] ?? key;
 }
 
 function field(
@@ -81,7 +94,7 @@ export function applyYears(option: string, years: number): string {
 export function coverPageLinkValues(
   template: CoverPageTemplate,
   values: NdaValues,
-): Record<string, FieldValue> {
+): CoverPageFieldValues {
   return {
     Purpose: field(values.purpose, template, "Purpose"),
     "Effective Date": field(
@@ -89,23 +102,31 @@ export function coverPageLinkValues(
       template,
       "Effective Date",
     ),
+    // A duration always has an answer, so it is never shown as unfilled.
     "MNDA Term": {
-      text:
-        values.termMode === "expires"
-          ? `${values.termYears}-year term`
-          : "term, which continues until terminated",
+      text: values.term.fixed
+        ? `${values.term.years}-year term`
+        : "term, which continues until terminated",
       filled: true,
     },
     "Term of Confidentiality": {
-      text:
-        values.confidentialityMode === "years"
-          ? `${values.confidentialityYears}-year term of confidentiality`
-          : "perpetual term of confidentiality",
+      text: values.confidentiality.fixed
+        ? `${values.confidentiality.years}-year term of confidentiality`
+        : "perpetual term of confidentiality",
       filled: true,
     },
     "Governing Law": field(values.governingLaw, template, "Governing Law"),
     Jurisdiction: field(values.jurisdiction, template, "Jurisdiction"),
   };
+}
+
+function fieldFor(
+  fields: CoverPageFieldValues,
+  marker: string,
+): FieldValue | undefined {
+  return (COVER_PAGE_FIELDS as readonly string[]).includes(marker)
+    ? fields[marker as CoverPageField]
+    : undefined;
 }
 
 /**
@@ -114,12 +135,13 @@ export function coverPageLinkValues(
  */
 export function fillCoverPageLinks(
   bodyHtml: string,
-  fields: Record<string, FieldValue>,
+  fields: CoverPageFieldValues,
 ): string {
   return bodyHtml.replace(COVERPAGE_LINK, (marker, key: string) => {
-    const value = fields[key];
+    const value = fieldFor(fields, key);
     if (!value) return marker;
-    const className = value.filled ? "mnda-value" : "mnda-value mnda-unfilled";
-    return `<span class="${className}">${escapeHtml(value.text)}</span>`;
+    return `<span class="${valueClass(value.filled)}">${escapeHtml(
+      value.text,
+    )}</span>`;
   });
 }

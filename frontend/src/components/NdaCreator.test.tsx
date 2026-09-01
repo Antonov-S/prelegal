@@ -61,7 +61,7 @@ describe("filling in the form", () => {
   it("carries a changed term through to the clause that cites it", async () => {
     const { user, document } = renderApp();
 
-    const years = screen.getByLabelText("MNDA term in years");
+    const years = screen.getByLabelText("Expires after, in years");
     await user.clear(years);
     await user.type(years, "3");
 

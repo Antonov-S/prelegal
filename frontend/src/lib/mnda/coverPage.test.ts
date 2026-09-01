@@ -77,14 +77,11 @@ describe("parseCoverPage", () => {
     expect(template.sections[2].label).toBeNull();
   });
 
-  it("keys a bare placeholder by its section title", () => {
-    expect(template.sections[0].hints).toEqual({
+  // Placeholders are collected across the whole template, since every consumer
+  // looks them up by name rather than by which section they came from.
+  it("keys a bare placeholder by its section title, a labelled one by its prefix", () => {
+    expect(template.hints).toEqual({
       Purpose: "Some default purpose",
-    });
-  });
-
-  it("keys a labelled placeholder by its prefix", () => {
-    expect(template.sections[2].hints).toEqual({
       Alpha: "Fill in alpha",
       Beta: "Fill in beta",
     });
@@ -97,21 +94,11 @@ describe("parseCoverPage", () => {
     ]);
   });
 
-  it("does not mistake a placeholder or an option for prose", () => {
-    expect(template.sections[0].paragraphs).toEqual([]);
-    expect(template.sections[1].paragraphs).toEqual([]);
-    expect(template.sections[2].paragraphs).toEqual([]);
-  });
-
-  // The signing statement sits between the last section and the table with no
-  // heading of its own, so it would otherwise be read as section prose.
-  it("lifts the signing statement out of the final section", () => {
+  // It sits between the last section and the table with no heading of its own.
+  it("reads the signing statement", () => {
     expect(template.signatureIntro).toBe(
       "By signing this Cover Page, the parties agree.",
     );
-    expect(template.sections[3].paragraphs).toEqual([
-      "Prose that belongs to the section.",
-    ]);
   });
 
   it("reads the party columns from the table header", () => {
@@ -182,10 +169,9 @@ describe("the repository's Mutual NDA cover page", () => {
   });
 
   it("carries the placeholders the form uses", () => {
-    const hints = Object.assign({}, ...coverPage.sections.map((s) => s.hints));
-    expect(hints["Governing Law"]).toBe("Fill in state");
-    expect(hints["Jurisdiction"]).toMatch(/^Fill in city or county/);
-    expect(hints.Purpose).toMatch(/^Evaluating whether/);
+    expect(coverPage.hints["Governing Law"]).toBe("Fill in state");
+    expect(coverPage.hints["Jurisdiction"]).toMatch(/^Fill in city or county/);
+    expect(coverPage.hints.Purpose).toMatch(/^Evaluating whether/);
   });
 
   it("has two parties and a six-row signature block", () => {
@@ -200,10 +186,8 @@ describe("the repository's Mutual NDA cover page", () => {
     ]);
   });
 
-  it("keeps the signing statement out of the modifications section", () => {
+  it("reads the signing statement", () => {
     expect(coverPage.signatureIntro).toMatch(/^By signing this Cover Page/);
-    const modifications = coverPage.sections.at(-1)!;
-    expect(modifications.paragraphs.join(" ")).not.toContain("By signing");
   });
 
   it("retains the CC BY attribution", () => {

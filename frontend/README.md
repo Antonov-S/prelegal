@@ -61,7 +61,8 @@ src/
   components/NdaForm.tsx    the inputs
   components/NdaDocument.tsx the document, and the print target
   lib/mnda/
-    source.ts               reads ../templates (server only)
+    source.ts               finds and reads templates/ (server only)
+    markdown.ts             line endings, titles, markdown rendering
     coverPage.ts            cover page parser
     standardTerms.ts        standard terms parser
     document.ts             display formatting and cross-reference filling

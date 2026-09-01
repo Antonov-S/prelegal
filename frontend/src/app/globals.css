@@ -67,8 +67,7 @@ body {
  * the agreement, though, so it is set as a quiet footer: small, grey, and with
  * its links unstyled so they do not pull the eye mid-contract.
  */
-.mnda-attribution,
-.mnda-terms > p:last-child {
+.mnda-attribution {
   margin-top: 2.5rem;
   padding-top: 1rem;
   border-top: 1px solid var(--color-neutral-200);
@@ -79,8 +78,7 @@ body {
   text-align: left;
 }
 
-.mnda-attribution a,
-.mnda-terms > p:last-child a {
+.mnda-attribution a {
   color: inherit;
   text-decoration: none;
 }
