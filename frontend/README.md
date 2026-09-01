@@ -17,6 +17,7 @@ Run the commands from this directory — the app reads the agreement text from
 ```bash
 npm run build   # production build (also type-checks)
 npm run lint
+npm test        # vitest run
 npm run start   # serve the production build
 ```
 
@@ -78,11 +79,17 @@ hide it in Chrome, but only by giving up every page margin. The form links to
 the setting in its print hint. Generating the PDF in-process (jsPDF, pdf-lib)
 is the way to stop depending on it.
 
+## Testing
+
+`npm test` runs Vitest against the real templates, so markdown the parsers
+cannot handle fails the suite. [TESTING.md](TESTING.md) lists what the automated
+tests cover and carries the manual checklist for everything a browser has to
+answer — print output above all, plus layout, keyboard access and other
+browsers.
+
 ## Scope
 
-This is a prototype. There is no backend, nothing is persisted, and there is no
-test suite — the parsers are pure functions and good candidates for unit tests
-when this grows past prototype stage.
+This is a prototype. There is no backend and nothing is persisted.
 
 The templates are Common Paper's, licensed CC BY 4.0; see
 `../templates/LICENSE.txt`.

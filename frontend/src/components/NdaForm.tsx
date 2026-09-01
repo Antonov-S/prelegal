@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 
 import { hintFor } from "@/lib/mnda/document";
 import type { CoverPageTemplate } from "@/lib/mnda/types";
@@ -53,6 +55,56 @@ function Field({
   );
 }
 
+/**
+ * A number of years, held as text while it is being edited.
+ *
+ * Coercing every keystroke to a valid number would make the field impossible to
+ * retype: clearing it would snap the value back to 1, and the next digit would
+ * land after that 1. So the draft is free to be empty or nonsensical, only a
+ * usable number is passed up, and the field settles back to the committed value
+ * when it loses focus.
+ */
+function YearsInput({
+  years,
+  label,
+  disabled,
+  onYearsChange,
+}: {
+  years: number;
+  label: string;
+  disabled: boolean;
+  onYearsChange: (years: number) => void;
+}) {
+  const [draft, setDraft] = useState(String(years));
+  const [committed, setCommitted] = useState(years);
+
+  // Adopt a value changed from outside, such as by Reset, without an effect.
+  if (years !== committed) {
+    setCommitted(years);
+    setDraft(String(years));
+  }
+
+  return (
+    <input
+      type="number"
+      min={1}
+      max={99}
+      value={draft}
+      disabled={disabled}
+      aria-label={label}
+      onChange={(event) => {
+        setDraft(event.target.value);
+        const parsed = Number(event.target.value);
+        if (Number.isFinite(parsed) && parsed >= 1) {
+          onYearsChange(Math.floor(parsed));
+        }
+      }}
+      onBlur={() => setDraft(String(years))}
+      className="w-20 rounded-md border border-neutral-300 px-2 py-1 text-sm disabled:bg-neutral-100 disabled:text-neutral-400"
+    />
+  );
+}
+
 /** A radio pair whose first choice is qualified by a number of years. */
 function DurationChoice({
   name,
@@ -94,17 +146,11 @@ function DurationChoice({
           <label htmlFor={name + "-years"} className="text-sm text-neutral-800">
             {yearsLabel}
           </label>
-          <input
-            type="number"
-            min={1}
-            max={99}
-            value={years}
+          <YearsInput
+            years={years}
+            label={legend + " in years"}
             disabled={!isYears}
-            aria-label={legend + " in years"}
-            onChange={(event) =>
-              onYearsChange(Math.max(1, Number(event.target.value) || 1))
-            }
-            className="w-20 rounded-md border border-neutral-300 px-2 py-1 text-sm disabled:bg-neutral-100 disabled:text-neutral-400"
+            onYearsChange={onYearsChange}
           />
           <span className="text-sm text-neutral-500">
             {years === 1 ? "year" : "years"}
