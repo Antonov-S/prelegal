@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-source-serif);
+}
+
+body {
+  color: var(--color-neutral-900);
+  background: var(--color-neutral-200);
+}
+
+/* --- The agreement ------------------------------------------------------ */
+
+/* Justified measure with hyphenation, as legal documents are typeset. */
+.mnda-justify {
+  text-align: justify;
+  hyphens: auto;
+}
+
+/*
+ * The Standard Terms arrive as HTML parsed from markdown, so they are styled by
+ * element rather than by class. Numbered clauses get a hanging indent: the
+ * numeral sits in the margin and the text block aligns under itself.
+ */
+.mnda-terms ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: clause;
+}
+
+.mnda-terms ol > li {
+  position: relative;
+  counter-increment: clause;
+  margin-top: 1.35rem;
+  padding-left: 2.5rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.mnda-terms ol > li::before {
+  content: counter(clause) ".";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.75rem;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.mnda-terms p {
+  margin: 0;
+}
+
+.mnda-terms a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-neutral-300);
+  text-underline-offset: 2px;
+}
+
+/*
+ * The Common Paper templates are CC BY 4.0, so the attribution and licence
+ * notice has to travel with any document generated from them. It is not part of
+ * the agreement, though, so it is set as a quiet footer: small, grey, and with
+ * its links unstyled so they do not pull the eye mid-contract.
+ */
+.mnda-attribution,
+.mnda-terms > p:last-child {
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-neutral-200);
+  font-family: var(--font-sans);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--color-neutral-500);
+  text-align: left;
+}
+
+.mnda-attribution a,
+.mnda-terms > p:last-child a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/*
+ * A value spliced into the Standard Terms in place of one of the template's
+ * cover-page cross-references. Underlined so a reader can tell at a glance
+ * which words came from the form.
+ */
+.mnda-value {
+  text-decoration: underline;
+  text-decoration-color: var(--color-neutral-300);
+  text-underline-offset: 3px;
+}
+
+/*
+ * A field the user has not answered yet, shown as the template's own hint.
+ * neutral-500 rather than a lighter grey: this is the only rendering an
+ * unanswered field gets, so it has to clear the 4.5:1 contrast minimum. The
+ * brackets and the italic carry the "unfilled" signal, not lightness alone.
+ */
+.mnda-unfilled {
+  color: var(--color-neutral-500);
+  font-style: italic;
+}
+
+/* --- Print -------------------------------------------------------------- */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  /* The Standard Terms start on their own sheet, as in the source documents. */
+  .mnda-page-break {
+    break-before: page;
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  #mnda-document {
+    max-width: none;
+    padding: 0;
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  /* Keep headings and signature rows from splitting across sheets. */
+  #mnda-document h1,
+  #mnda-document h2,
+  #mnda-document tr,
+  .mnda-terms ol > li {
+    break-inside: avoid;
+  }
+
+  #mnda-document h1,
+  #mnda-document h2 {
+    break-after: avoid;
+  }
+
+  #mnda-document a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
