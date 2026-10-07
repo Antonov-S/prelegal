@@ -9,7 +9,7 @@ npm run lint
 npm run build     # type-checks as part of the build
 ```
 
-91 tests across seven files. They run against the **real** templates in
+93 tests across eight files. They run against the **real** templates in
 `../templates/`, not fixtures, so a change to the source markdown that the
 parsers cannot handle fails the suite. They also run through the React
 Compiler, as `next build` does, so the components under test are the ones that
@@ -23,6 +23,7 @@ ship.
 | `src/lib/mnda/document.test.ts` | Year pluralisation, time-zone-safe date formatting, placeholder lookup, and the phrasing of all six cross-references in both their fixed and open-ended forms. Includes the escaping check: markup typed into a field must arrive as text, since the result goes through `dangerouslySetInnerHTML`. |
 | `src/components/NdaDocument.test.tsx` | What the document renders for empty and filled values: placeholder fallbacks, which checkbox is ticked, the eleven clauses, each party's signature column, and the rows deliberately left blank to sign. |
 | `src/components/NdaForm.test.tsx` | That labels, help text and placeholders come from the template rather than hardcoded copy; the years field's editing behaviour. |
+| `src/components/SignIn.test.tsx` | The placeholder sign-in navigates to the creator once both fields are filled in, and not before. |
 | `src/components/NdaCreator.test.tsx` | End to end: typing updates the document, clearing restores the placeholder, a changed term reaches the clause citing it, Reset clears both panes, and the page is renamed for printing then restored. |
 
 ## Manual
@@ -100,8 +101,10 @@ depends on the browser's print implementation:
 
 - [ ] `npm --prefix frontend run build` from the repository root succeeds — the
       templates are found by walking up, not by assuming the working directory.
-- [ ] If you deploy with `output: "standalone"`, confirm `templates/` lands
-      beside `frontend/` in `.next/standalone/`.
+- [ ] `scripts/start-*` builds the image, and at http://localhost:8000 the
+      sign-in screen appears; submitting it with any email and password opens
+      the creator at `/nda/`, and a hard refresh there reloads the creator.
+- [ ] Submitting the sign-in with a field empty is blocked by the browser.
 
 ### 7. The templates are the source of truth
 

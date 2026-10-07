@@ -1,19 +1,15 @@
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import type { NextConfig } from "next";
-
-const repositoryRoot = join(fileURLToPath(new URL(".", import.meta.url)), "..");
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
 
-  // The agreement's wording is read from the repository's templates/ directory,
-  // which sits above this package. The path is assembled at runtime, so file
-  // tracing cannot infer it: name it here, or a standalone build ships without
-  // the templates and fails at startup.
-  outputFileTracingRoot: repositoryRoot,
-  outputFileTracingIncludes: { "/": ["../templates/**/*.md"] },
+  // Built to static files in out/ and served by the FastAPI backend. The
+  // agreement's wording is read from ../templates/ at build time, so the
+  // exported pages need nothing from disk at runtime.
+  output: "export",
+  // Emits nda/index.html rather than nda.html, which is the layout the
+  // backend's static file server resolves for /nda/.
+  trailingSlash: true,
 };
 
 export default nextConfig;

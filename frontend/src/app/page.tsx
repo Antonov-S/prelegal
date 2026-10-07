@@ -1,13 +1,11 @@
-import NdaCreator from "@/components/NdaCreator";
-import { loadMndaTemplate } from "@/lib/mnda/source";
+import type { Metadata } from "next";
 
-/**
- * The templates are read from disk here, in a server component, so the parsing
- * happens once when this statically rendered page is built rather than on every
- * request or in the browser.
- */
-const template = loadMndaTemplate();
+import SignIn from "@/components/SignIn";
 
-export default function Home() {
-  return <NdaCreator template={template} />;
+export const metadata: Metadata = {
+  title: "Prelegal — Sign in",
+};
+
+export default function SignInPage() {
+  return <SignIn />;
 }
