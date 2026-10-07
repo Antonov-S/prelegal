@@ -1,8 +1,12 @@
 # Prelegal frontend — Mutual NDA creator
 
-A prototype web app (KAN-8) that turns the repository's Common Paper Mutual NDA
-templates into a completed, downloadable agreement. The user fills in a cover
-page, the document updates live beside the form, and **Download PDF** prints it.
+Turns the repository's Common Paper Mutual NDA templates into a completed,
+downloadable agreement. A placeholder sign-in at `/` leads to the creator at
+`/nda/`, where the user fills in a cover page, the document updates live beside
+the form, and **Download PDF** prints it.
+
+The sign-in does not authenticate: nothing is checked, stored or sent, and
+`/nda/` can be opened directly. Real accounts arrive with the multi-user stage.
 
 ## Running it
 
@@ -16,10 +20,9 @@ time, found by walking up from the working directory — so a build started from
 the repository root works too.
 
 ```bash
-npm run build   # production build (also type-checks)
+npm run build   # static export to out/ (also type-checks)
 npm run lint
 npm test        # vitest run
-npm run start   # serve the production build
 ```
 
 ## How it works
@@ -56,7 +59,9 @@ plausible document.
 
 ```
 src/
-  app/page.tsx              server component; loads and parses the templates
+  app/page.tsx              placeholder sign-in
+  app/nda/page.tsx          server component; loads and parses the templates
+  components/SignIn.tsx     sign-in form; submitting navigates to /nda/
   components/NdaCreator.tsx client shell; form state, print button, two-pane layout
   components/NdaForm.tsx    the inputs
   components/NdaDocument.tsx the document, and the print target
@@ -92,12 +97,11 @@ is the way to stop depending on it.
 
 ### Deploying
 
-`next.config.ts` pins `outputFileTracingRoot` to the repository and names
-`../templates/**/*.md` in `outputFileTracingIncludes`. The read path is
-assembled at runtime, so Next's file tracing cannot infer it; without those two
-lines a standalone build ships without the agreement's wording and fails at
-startup. With them, `.next/standalone/` holds `frontend/` and `templates/` side
-by side.
+`next.config.ts` sets `output: "export"`, so `npm run build` writes plain files
+to `out/` and the FastAPI backend serves them. The templates are read only at
+build time, which is why the Docker build copies `templates/` beside
+`frontend/`. `trailingSlash: true` emits `nda/index.html`, the layout the
+backend's static file server resolves.
 
 ## Testing
 
@@ -109,7 +113,8 @@ browsers.
 
 ## Scope
 
-This is a prototype. There is no backend and nothing is persisted.
+The frontend does not call the backend yet, and nothing the user types is
+persisted.
 
 The templates are Common Paper's, licensed CC BY 4.0; see
 `../templates/LICENSE.txt`.

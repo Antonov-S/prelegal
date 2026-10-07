@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    image: prelegal
+    ports:
+      - "8000:8000"

@@ -77,9 +77,8 @@ export function assertRenderable(coverPage: CoverPageTemplate): void {
  */
 export function loadMndaTemplate(): MndaTemplate {
   const directory = templatesDir();
-  // The templates are named explicitly in next.config.ts's tracing includes,
-  // so the bundler does not need to infer them from this call — and left to
-  // infer, it gives up and traces the entire project into the server bundle.
+  // The templates are only read at build time, so the bundler must not try to
+  // trace this call — left to infer, it gives up and traces the entire project.
   const read = (filename: string) =>
     readFileSync(join(/* turbopackIgnore: true */ directory, filename), "utf8");
 
