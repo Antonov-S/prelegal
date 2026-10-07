@@ -70,13 +70,16 @@ describe("NdaDocument, before anything is filled in", () => {
     expect(within(article).getByText("None.")).toBeInTheDocument();
   });
 
-  it("starts on the fixed-term alternative in both duration sections", () => {
+  it("ticks neither duration alternative until one is chosen", () => {
     const article = renderDocument(emptyValues);
-    expect(option(article, /Expires 1 year from/).textContent).toContain("☒");
+    expect(option(article, /Expires \[1 year\(s\)\] from/).textContent).toContain(
+      "☐",
+    );
     expect(option(article, /Continues until terminated/).textContent).toContain(
       "☐",
     );
     expect(option(article, /In perpetuity/).textContent).toContain("☐");
+    expect(within(article).queryByText("☒")).toBeNull();
   });
 });
 
@@ -109,13 +112,17 @@ describe("NdaDocument, filled in", () => {
   it("moves the tick when the open-ended alternatives are chosen", () => {
     const article = renderDocument({
       ...filled,
-      term: { ...filled.term, fixed: false },
-      confidentiality: { ...filled.confidentiality, fixed: false },
+      term: { fixed: false, years: 2 },
+      confidentiality: { fixed: false, years: 5 },
     });
     expect(option(article, /Continues until terminated/).textContent).toContain(
       "☒",
     );
-    expect(option(article, /Expires 2 years from/).textContent).toContain("☐");
+    // The years only belong to the fixed alternative, so once it is passed
+    // over it keeps the template's placeholder.
+    expect(
+      option(article, /Expires \[1 year\(s\)\] from/).textContent,
+    ).toContain("☐");
     expect(option(article, /In perpetuity/).textContent).toContain("☒");
   });
 

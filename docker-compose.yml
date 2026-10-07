@@ -4,3 +4,8 @@ services:
     image: prelegal
     ports:
       - "8000:8000"
+    # Supplies OPENROUTER_API_KEY. Optional so the app still starts without it;
+    # the chat then reports that the assistant is unavailable.
+    env_file:
+      - path: .env
+        required: false

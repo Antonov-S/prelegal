@@ -4,6 +4,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import create_engine
@@ -15,6 +16,10 @@ from app.seed import seed_templates
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DATABASE_URL = "sqlite:///./prelegal.db"
+
+# Local runs read secrets from the repository's .env; Docker passes them as
+# environment variables, which take precedence.
+load_dotenv(REPO_ROOT / ".env")
 
 
 def create_app(

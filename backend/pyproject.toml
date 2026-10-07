@@ -6,6 +6,8 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.142.2",
+    "litellm>=1.104.0",
+    "python-dotenv>=1.2.4",
     "sqlalchemy>=2.1.4",
     "uvicorn[standard]>=0.54.0",
 ]

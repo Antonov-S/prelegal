@@ -9,7 +9,7 @@ npm run lint
 npm run build     # type-checks as part of the build
 ```
 
-93 tests across eight files. They run against the **real** templates in
+80 tests across seven files. They run against the **real** templates in
 `../templates/`, not fixtures, so a change to the source markdown that the
 parsers cannot handle fails the suite. They also run through the React
 Compiler, as `next build` does, so the components under test are the ones that
@@ -21,10 +21,11 @@ ship.
 | `src/lib/mnda/standardTerms.test.ts` | Title extraction, markdown rendering, and that the ten `coverpage_link` markers survive parsing — losing them would silently leave the agreement citing a cover page instead of real values. |
 | `src/lib/mnda/source.test.ts` | The load-time contract: that a renamed cover-page section or a template naming other than two parties fails the build rather than rendering an empty row while the Standard Terms go on citing it. |
 | `src/lib/mnda/document.test.ts` | Year pluralisation, time-zone-safe date formatting, placeholder lookup, and the phrasing of all six cross-references in both their fixed and open-ended forms. Includes the escaping check: markup typed into a field must arrive as text, since the result goes through `dangerouslySetInnerHTML`. |
-| `src/components/NdaDocument.test.tsx` | What the document renders for empty and filled values: placeholder fallbacks, which checkbox is ticked, the eleven clauses, each party's signature column, and the rows deliberately left blank to sign. |
-| `src/components/NdaForm.test.tsx` | That labels, help text and placeholders come from the template rather than hardcoded copy; the years field's editing behaviour. |
+| `src/components/NdaDocument.test.tsx` | What the document renders for empty and filled values: placeholder fallbacks, that no duration is ticked until chosen, which checkbox is ticked, the eleven clauses, each party's signature column, and the rows deliberately left blank to sign. |
 | `src/components/SignIn.test.tsx` | The placeholder sign-in navigates to the creator once both fields are filled in, and not before. |
-| `src/components/NdaCreator.test.tsx` | End to end: typing updates the document, clearing restores the placeholder, a changed term reaches the clause citing it, Reset clears both panes, and the page is renamed for printing then restored. |
+| `src/components/NdaCreator.test.tsx` | End to end with `fetch` mocked: the conversation and current values are sent each turn, replies appear, extracted values reach the document (escaped), the missing-fields and complete statuses show, a failed turn keeps the message for retry, Reset clears chat and document, and the page is renamed for printing then restored. |
+
+The backend's chat logic is tested separately: `uv run pytest` in `../backend`.
 
 ## Manual
 
@@ -33,9 +34,9 @@ for. Run `npm run dev` and work through them.
 
 ### 1. Print output — the important one
 
-Fill in every field, then **Download PDF**.
+Complete the conversation until every field is filled, then **Download PDF**.
 
-- [ ] The form, header and buttons are absent from the printed pages.
+- [ ] The chat, status, header and buttons are absent from the printed pages.
 - [ ] The cover page ends and the **Standard Terms begin on a fresh sheet**.
 - [ ] Margins are even on every page, including continuation pages.
 - [ ] No clause is split awkwardly across a page break, and no heading is left
@@ -57,32 +58,30 @@ brackets, and the document should still be a coherent, complete agreement.
 
 ### 2. Appearance
 
-- [ ] The agreement is set in a serif face; the form and header are not.
+- [ ] The agreement is set in a serif face; the chat and header are not.
 - [ ] The cover page reads as a term sheet — field names in the left column,
       answers beside them, ruled between rows.
 - [ ] Unanswered fields are visibly muted against answered ones — but still
       legible: they and the attribution footers should clear 4.5:1 against
       white.
 - [ ] Values substituted into the Standard Terms are underlined, so it is clear
-      which words came from the form.
+      which words came from the chat.
 - [ ] The attribution footers are quiet: small, grey, links not underlined.
 
 ### 3. Layout
 
-- [ ] At a desktop width the form and document sit side by side, and the form
-      column scrolls independently while the document stays put.
+- [ ] At a desktop width the chat and document sit side by side; the chat
+      fills the viewport height and its messages scroll inside it.
 - [ ] Below the `lg` breakpoint they stack, and nothing overflows sideways.
 - [ ] A very long Purpose, a long company name, and a multi-line notice address
       all wrap rather than breaking the layout or the signature table.
 
 ### 4. Keyboard and assistive technology
 
-- [ ] Every field is reachable by Tab, in a sensible order, with a visible focus
-      ring.
-- [ ] Each input is announced with its label and its help text (automated, but
-      worth hearing once in a real screen reader).
-- [ ] The duration radio groups can be operated with arrow keys, and the years
-      field is skipped when its alternative is not selected.
+- [ ] The message box and Send are reachable by Tab with a visible focus ring;
+      Enter sends and Shift+Enter starts a new line.
+- [ ] A screen reader announces new assistant replies (the log is a live
+      region) and the status line as it changes.
 - [ ] In the document, a screen reader distinguishes the chosen alternative from
       the one not chosen, in both duration sections.
 - [ ] A screen reader reads the signature block as a table with the party names
@@ -109,10 +108,19 @@ depends on the browser's print implementation:
 ### 7. The templates are the source of truth
 
 - [ ] Edit a heading or a `<label>` in `../templates/mutual-nda-coverpage.md`,
-      restart the dev server, and confirm the change appears in both the form
-      and the document.
+      restart the dev server, and confirm the change appears in the document.
 - [ ] Restore the file afterwards.
 
-### 8. Console
+### 8. Conversation quality
+
+Needs `OPENROUTER_API_KEY` in the repository's `.env`.
+
+- [ ] Giving several details in one message fills all of them.
+- [ ] Nothing is filled that was not said; vague answers prompt a question.
+- [ ] Changing an earlier answer ("make it 3 years instead") updates it and
+      keeps everything else.
+- [ ] Once nothing is missing, the status says the agreement is complete.
+
+### 9. Console
 
 - [ ] No errors or hydration warnings on load or while typing.

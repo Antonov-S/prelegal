@@ -106,7 +106,8 @@ function SectionBody({
       );
 
     // Both duration sections list the fixed-term alternative first and the
-    // open-ended one second.
+    // open-ended one second. Until one is chosen, neither is ticked and the
+    // fixed term keeps the template's placeholder.
     case "mnda-term":
     case "term-of-confidentiality": {
       const duration =
@@ -114,9 +115,11 @@ function SectionBody({
       return (
         <Options
           options={section.options.map((option, index) =>
-            index === 0 ? applyYears(option, duration.years) : option,
+            index === 0 && duration?.fixed
+              ? applyYears(option, duration.years)
+              : option,
           )}
-          selected={duration.fixed ? 0 : 1}
+          selected={duration ? (duration.fixed ? 0 : 1) : -1}
         />
       );
     }

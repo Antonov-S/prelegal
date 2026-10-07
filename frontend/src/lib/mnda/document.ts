@@ -67,11 +67,11 @@ export function hintFor(template: CoverPageTemplate, key: string): string {
 }
 
 function field(
-  value: string,
+  value: string | null,
   template: CoverPageTemplate,
   hintKey: string,
 ): FieldValue {
-  const trimmed = value.trim();
+  const trimmed = value?.trim();
   return trimmed
     ? { text: trimmed, filled: true }
     : { text: `[${hintFor(template, hintKey)}]`, filled: false };
@@ -102,19 +102,22 @@ export function coverPageLinkValues(
       template,
       "Effective Date",
     ),
-    // A duration always has an answer, so it is never shown as unfilled.
-    "MNDA Term": {
-      text: values.term.fixed
-        ? `${values.term.years}-year term`
-        : "term, which continues until terminated",
-      filled: true,
-    },
-    "Term of Confidentiality": {
-      text: values.confidentiality.fixed
-        ? `${values.confidentiality.years}-year term of confidentiality`
-        : "perpetual term of confidentiality",
-      filled: true,
-    },
+    "MNDA Term": field(
+      values.term &&
+        (values.term.fixed
+          ? `${values.term.years}-year term`
+          : "term, which continues until terminated"),
+      template,
+      "MNDA Term",
+    ),
+    "Term of Confidentiality": field(
+      values.confidentiality &&
+        (values.confidentiality.fixed
+          ? `${values.confidentiality.years}-year term of confidentiality`
+          : "perpetual term of confidentiality"),
+      template,
+      "Term of Confidentiality",
+    ),
     "Governing Law": field(values.governingLaw, template, "Governing Law"),
     Jurisdiction: field(values.jurisdiction, template, "Jurisdiction"),
   };

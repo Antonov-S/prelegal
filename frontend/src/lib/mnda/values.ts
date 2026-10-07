@@ -1,4 +1,4 @@
-/** The answers a user gives in the form, and the empty state they start from. */
+/** The answers collected from the user, and the empty state they start from. */
 
 export type PartyValues = {
   company: string;
@@ -21,8 +21,9 @@ export type NdaValues = {
   purpose: string;
   /** ISO `yyyy-mm-dd`, as produced by `<input type="date">`. */
   effectiveDate: string;
-  term: Duration;
-  confidentiality: Duration;
+  /** Null until the user has chosen; neither alternative is assumed. */
+  term: Duration | null;
+  confidentiality: Duration | null;
   governingLaw: string;
   jurisdiction: string;
   modifications: string;
@@ -45,8 +46,8 @@ const emptyParty: PartyValues = {
 export const emptyValues: NdaValues = {
   purpose: "",
   effectiveDate: "",
-  term: { fixed: true, years: 1 },
-  confidentiality: { fixed: true, years: 1 },
+  term: null,
+  confidentiality: null,
   governingLaw: "",
   jurisdiction: "",
   modifications: "",
