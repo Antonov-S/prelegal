@@ -86,19 +86,11 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
           <div className="min-h-0 flex-1">
             <NdaChat key={chatKey} values={values} onTurn={applyTurn} />
           </div>
-          <div className="space-y-2 text-xs text-neutral-500">
-            <p>
-              Download PDF opens your browser&rsquo;s print dialog. Choose
-              &ldquo;Save as PDF&rdquo; as the destination to keep a copy
-              locally.
-            </p>
-            <p>
-              Under <span className="text-neutral-700">More settings</span>,
-              switch off <span className="text-neutral-700">Headers and
-              footers</span> — otherwise the browser prints its own address and
-              date along the edge of every page.
-            </p>
-          </div>
+          <p className="text-xs text-neutral-500">
+            Download PDF opens your browser&rsquo;s print dialog. Choose
+            &ldquo;Save as PDF&rdquo; as the destination to keep a copy
+            locally.
+          </p>
         </div>
 
         <div className="rounded-sm bg-white shadow-lg ring-1 ring-neutral-300/70 print:rounded-none print:shadow-none print:ring-0">

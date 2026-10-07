@@ -91,9 +91,11 @@ function SectionBody({
   fields: CoverPageFieldValues;
 }) {
   switch (section.slug) {
+    // Collected lowercase so it reads mid-sentence in the Standard Terms;
+    // capitalised here, where it stands alone.
     case "purpose":
       return (
-        <p className="mnda-justify">
+        <p className="mnda-justify first-letter:uppercase">
           <Value value={fields.Purpose} />
         </p>
       );

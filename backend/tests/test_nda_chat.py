@@ -193,3 +193,17 @@ def test_merge_clears_modifications_when_withdrawn():
     current = NdaFields(modifications="Section 8 is deleted.")
     assert merge_updates(current, updates(modifications="None")).modifications == ""
     assert merge_updates(current, updates(modifications=None)) == current
+
+
+@pytest.mark.parametrize(
+    "said",
+    [
+        "courts in New Castle County, Delaware",
+        "Courts located in New Castle County, Delaware",
+        "the federal or state courts located in New Castle County, Delaware",
+        "New Castle County, Delaware",
+    ],
+)
+def test_merge_keeps_only_the_place_for_jurisdiction(said):
+    merged = merge_updates(NdaFields(), updates(jurisdiction=said))
+    assert merged.jurisdiction == "New Castle County, Delaware"

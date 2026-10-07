@@ -108,9 +108,12 @@ body {
 /* --- Print -------------------------------------------------------------- */
 
 @media print {
+  /* Browsers draw their own date, title, URL and page numbers inside the page
+     margin. With no margin there is nowhere to draw them, so the margin is
+     made by the document's padding instead, cloned onto every sheet. */
   @page {
     size: A4;
-    margin: 18mm;
+    margin: 0;
   }
 
   body {
@@ -127,7 +130,8 @@ body {
 
   #mnda-document {
     max-width: none;
-    padding: 0;
+    padding: 18mm;
+    box-decoration-break: clone;
     font-size: 10.5pt;
     line-height: 1.55;
   }

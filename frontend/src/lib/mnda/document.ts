@@ -14,7 +14,15 @@ export type FieldValue = { text: string; filled: boolean };
 
 export type CoverPageFieldValues = Record<CoverPageField, FieldValue>;
 
-const COVERPAGE_LINK = /<span class="coverpage_link">([^<]*)<\/span>/g;
+/** A cross-reference marker, with any article before it captured separately. */
+const COVERPAGE_LINK = /(the )?<span class="coverpage_link">([^<]*)<\/span>/g;
+
+/**
+ * Fields the Standard Terms cite as a defined term ("commences on the
+ * Effective Date", "solely for the Purpose") whose value cannot take the
+ * article: "on the October 7", "for the evaluating a partnership".
+ */
+const WITHOUT_ARTICLE = new Set<string>(["Effective Date", "Purpose"]);
 
 const HTML_ESCAPES: Record<string, string> = {
   "&": "&amp;",
@@ -140,11 +148,15 @@ export function fillCoverPageLinks(
   bodyHtml: string,
   fields: CoverPageFieldValues,
 ): string {
-  return bodyHtml.replace(COVERPAGE_LINK, (marker, key: string) => {
-    const value = fieldFor(fields, key);
-    if (!value) return marker;
-    return `<span class="${valueClass(value.filled)}">${escapeHtml(
-      value.text,
-    )}</span>`;
-  });
+  return bodyHtml.replace(
+    COVERPAGE_LINK,
+    (marker, article: string | undefined, key: string) => {
+      const value = fieldFor(fields, key);
+      if (!value) return marker;
+      const kept = article && !WITHOUT_ARTICLE.has(key) ? article : "";
+      return `${kept}<span class="${valueClass(value.filled)}">${escapeHtml(
+        value.text,
+      )}</span>`;
+    },
+  );
 }

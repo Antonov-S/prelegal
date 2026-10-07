@@ -149,11 +149,11 @@ describe("fillCoverPageLinks", () => {
 
   it("replaces every marker with the matching answer", () => {
     const html = fillCoverPageLinks(
-      '<p>for the <span class="coverpage_link">Purpose</span></p>',
+      '<p>laws of the State of <span class="coverpage_link">Governing Law</span></p>',
       fields,
     );
     expect(html).toBe(
-      '<p>for the <span class="mnda-value">Evaluating a partnership</span></p>',
+      '<p>laws of the State of <span class="mnda-value">Delaware</span></p>',
     );
   });
 
@@ -195,6 +195,22 @@ describe("fillCoverPageLinks", () => {
     );
     expect(html).toContain(
       'laws of the State of <span class="mnda-value">Delaware</span>',
+    );
+  });
+
+  // The terms cite "the Effective Date" and "the Purpose"; a date or a
+  // purpose phrase in their place takes no article.
+  it("drops the article before the effective date and the purpose", () => {
+    const { standardTerms } = loadMndaTemplate();
+    const html = fillCoverPageLinks(standardTerms.bodyHtml, fields);
+    expect(html).toContain(
+      'commences on <span class="mnda-value">March 1, 2026</span>',
+    );
+    expect(html).toContain(
+      'solely for <span class="mnda-value">Evaluating a partnership</span>',
+    );
+    expect(html).not.toMatch(
+      /the <span class="mnda-value">(March 1, 2026|Evaluating a partnership)/,
     );
   });
 });

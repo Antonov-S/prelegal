@@ -103,12 +103,11 @@ companies, once both are filled in) and restored on `afterprint`. Chrome puts
 the page title in its print header and uses it for the suggested filename, so
 this keeps the name of the tool off the document.
 
-The browser also prints its own address, date and page numbers along the page
-edge unless the person printing switches off **More settings → Headers and
-footers**. A page cannot suppress that from CSS — `@page { margin: 0 }` does
-hide it in Chrome, but only by giving up every page margin. The creator points
-to the setting in its print hint. Generating the PDF in-process (jsPDF, pdf-lib)
-is the way to stop depending on it.
+Browsers print their own date, title, URL and page numbers inside the page
+margin. The print stylesheet sets `@page { margin: 0 }`, which leaves them no
+room, and makes the 18 mm margin from the document's padding instead, with
+`box-decoration-break: clone` repeating it on every sheet. Verified in Chrome
+with headers and footers switched on.
 
 ### Deploying
 

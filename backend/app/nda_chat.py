@@ -4,6 +4,7 @@ The model proposes field updates through a strict schema; this module decides
 what is accepted, what is still missing, and whether the document is complete.
 """
 
+import re
 from datetime import date
 from typing import Annotated, Literal
 
@@ -105,12 +106,12 @@ class ChatResponse(CamelModel):
 # --- Field definitions and rules ----------------------------------------------
 
 FIELD_DEFINITIONS = """\
-- purpose: how confidential information may be used, e.g. "Evaluating whether to enter into a business relationship".
+- purpose: what confidential information may be used for, as a lowercase phrase that completes "solely for ...", usually starting with an -ing verb, e.g. "evaluating a potential partnership". Keep the user's meaning and words; only adjust the grammar to fit.
 - effectiveDate: the date the agreement takes effect (yyyy-mm-dd).
 - term: how long the MNDA lasts. Either a fixed number of years (fixed=true, years 1-99) or continuing until terminated (fixed=false).
 - confidentiality: how long confidential information stays protected. Either a fixed number of years (fixed=true, years 1-99) or in perpetuity (fixed=false).
 - governingLaw: the US state whose law governs the agreement, e.g. "Delaware".
-- jurisdiction: the city/county and state whose courts hear disputes, e.g. "courts located in New Castle, DE".
+- jurisdiction: only the place (city/county and state) whose courts hear disputes, e.g. "New Castle County, Delaware". The agreement already says "courts located in", so never include those words.
 - modifications: optional changes to the standard terms. Leave null unless the user describes some; set to "none" if they withdraw earlier ones.
 - party1 / party2: for each party, the company name, the signatory's full name and title, and a notice address (email or postal address)."""
 
@@ -156,6 +157,15 @@ def _modifications(update: str | None, current: str) -> str:
     return _text(update, current)
 
 
+# The Standard Terms read "the federal or state courts located in <Jurisdiction>".
+COURTS_PREFIX = re.compile(r"^(the\s+)?((federal|state|federal or state)\s+)?courts?\s+(located\s+)?in\s+", re.I)
+
+
+def _jurisdiction(update: str | None, current: str) -> str:
+    """Like `_text`, but keeps only the place: the agreement supplies "courts located in"."""
+    return _text(COURTS_PREFIX.sub("", update.strip()) if update else update, current)
+
+
 def _date(update: str | None, current: str) -> str:
     try:
         return date.fromisoformat(update).isoformat() if update else current
@@ -188,7 +198,7 @@ def merge_updates(fields: NdaFields, updates: NdaFieldUpdates) -> NdaFields:
         term=_duration(updates.term, fields.term),
         confidentiality=_duration(updates.confidentiality, fields.confidentiality),
         governing_law=_text(updates.governing_law, fields.governing_law),
-        jurisdiction=_text(updates.jurisdiction, fields.jurisdiction),
+        jurisdiction=_jurisdiction(updates.jurisdiction, fields.jurisdiction),
         modifications=_modifications(updates.modifications, fields.modifications),
         party1=_party(updates.party1, fields.party1),
         party2=_party(updates.party2, fields.party2),

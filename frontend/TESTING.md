@@ -45,8 +45,8 @@ Complete the conversation until every field is filled, then **Download PDF**.
 - [ ] Clause numbers stay in the margin, with the text block aligned under
       itself, on every page.
 - [ ] Links are black and unlaid, not blue and underlined.
-- [ ] Switching off **More settings → Headers and footers** removes the browser's
-      URL, date and page numbers. (The app cannot do this; see README.)
+- [ ] No browser date, title, URL or page numbers on any page, even with
+      **More settings → Headers and footers** switched on.
 - [ ] The suggested filename is the agreement's name — "Mutual NDA — Acme, Inc.
       and Globex Corp" once both companies are filled in, otherwise "Mutual
       Non-Disclosure Agreement".
