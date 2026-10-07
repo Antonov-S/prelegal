@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
   // Emits nda/index.html rather than nda.html, which is the layout the
   // backend's static file server resolves for /nda/.
   trailingSlash: true,
+
+  // In production FastAPI serves both the pages and /api from one origin. Under
+  // `next dev` the API runs separately, so proxy to it. (A static export cannot
+  // carry rewrites, hence development only.)
+  ...(process.env.NODE_ENV === "development" && {
+    rewrites: async () => [
+      { source: "/api/:path*", destination: "http://localhost:8000/api/:path*" },
+    ],
+  }),
 };
 
 export default nextConfig;

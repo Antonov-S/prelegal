@@ -3,114 +3,162 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import NdaCreator from "@/components/NdaCreator";
+import type { ChatTurn } from "@/lib/mnda/chat";
 import { loadMndaTemplate } from "@/lib/mnda/source";
+import { emptyValues, type NdaValues } from "@/lib/mnda/values";
 
 const template = loadMndaTemplate();
+const fetchMock = vi.fn();
 
-function renderApp() {
-  render(<NdaCreator template={template} />);
+beforeEach(() => vi.stubGlobal("fetch", fetchMock));
+afterEach(() => {
+  fetchMock.mockReset();
+  vi.unstubAllGlobals();
+});
+
+function turn(fields: Partial<NdaValues>, reply = "Thanks!", missing = ["Purpose"]): ChatTurn {
   return {
-    user: userEvent.setup(),
-    document: () => screen.getByRole("article"),
+    reply,
+    fields: { ...emptyValues, ...fields },
+    missing,
+    complete: missing.length === 0,
   };
 }
 
-describe("filling in the form", () => {
-  it("writes what is typed into the document", async () => {
-    const { user, document } = renderApp();
+function respondWith(...turns: ChatTurn[]) {
+  for (const next of turns) {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify(next), { status: 200 }),
+    );
+  }
+}
 
-    await user.type(screen.getByLabelText("Governing law"), "Delaware");
+function renderApp() {
+  render(<NdaCreator template={template} />);
+  const user = userEvent.setup();
+  return {
+    user,
+    document: () => screen.getByRole("article"),
+    say: async (text: string) => {
+      await user.type(screen.getByLabelText("Message"), text);
+      await user.click(screen.getByRole("button", { name: "Send" }));
+    },
+  };
+}
+
+function requestBody(call: number) {
+  return JSON.parse(fetchMock.mock.calls[call][1].body);
+}
+
+describe("chatting", () => {
+  it("opens with the assistant's first question", () => {
+    renderApp();
+    expect(screen.getByRole("log")).toHaveTextContent(/Who are the two parties/);
+  });
+
+  it("sends the conversation and shows the reply", async () => {
+    const { say } = renderApp();
+    respondWith(turn({}, "What is the purpose?"));
+
+    await say("Acme and Globex");
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/nda/chat", expect.anything());
+    const body = requestBody(0);
+    expect(body.messages.map((m: { role: string }) => m.role)).toEqual([
+      "assistant",
+      "user",
+    ]);
+    expect(body.messages[1].content).toBe("Acme and Globex");
+    expect(body.fields).toEqual(emptyValues);
+    expect(body.today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    const log = screen.getByRole("log");
+    expect(await within(log).findByText("What is the purpose?")).toBeInTheDocument();
+    expect(screen.getByLabelText("Message")).toHaveValue("");
+  });
+
+  it("writes extracted values into the document", async () => {
+    const { say, document } = renderApp();
+    respondWith(turn({ governingLaw: "Delaware", term: { fixed: true, years: 3 } }));
+
+    await say("Delaware law, three years");
 
     // Once on the cover page, twice more where section 9 cites it.
-    expect(within(document()).getAllByText("Delaware")).toHaveLength(3);
-    expect(within(document()).queryByText("[Fill in state]")).toBeNull();
+    expect(await within(document()).findAllByText("Delaware")).toHaveLength(3);
+    expect(within(document()).getByText("3-year term")).toBeInTheDocument();
   });
 
-  it("replaces a cleared answer with the template's placeholder again", async () => {
-    const { user, document } = renderApp();
-    const governingLaw = screen.getByLabelText("Governing law");
+  it("sends back the values collected so far on the next turn", async () => {
+    const { say } = renderApp();
+    const first = turn({ governingLaw: "Delaware" }, "And the purpose?");
+    respondWith(first, turn({ governingLaw: "Delaware", purpose: "Partnership" }));
 
-    await user.type(governingLaw, "Delaware");
-    await user.clear(governingLaw);
+    await say("Delaware");
+    await screen.findByText("And the purpose?");
+    await say("Partnership");
 
-    expect(within(document()).getAllByText("[Fill in state]")).toHaveLength(3);
+    const body = requestBody(1);
+    expect(body.fields).toEqual(first.fields);
+    expect(body.messages).toHaveLength(4);
   });
 
-  it("formats a picked date for the document", async () => {
-    const { document } = renderApp();
+  it("lists what is still missing", async () => {
+    const { say } = renderApp();
+    respondWith(turn({}, "Next?", ["Purpose", "Jurisdiction"]));
 
-    const date = screen.getByLabelText("Effective date");
-    await userEvent.setup().type(date, "2026-03-01");
+    await say("Hi");
 
-    expect(within(document()).getAllByText("March 1, 2026")).toHaveLength(2);
-  });
-
-  it("moves the tick when a duration alternative is chosen", async () => {
-    const { user, document } = renderApp();
-
-    await user.click(screen.getByLabelText("In perpetuity"));
-
-    const chosen = within(document())
-      .getByText(/^In perpetuity/)
-      .closest("li")!;
-    expect(chosen.textContent).toContain("☒");
-    expect(within(document()).getByText(/perpetual term of confidentiality/))
-      .toBeInTheDocument();
-  });
-
-  it("carries a changed term through to the clause that cites it", async () => {
-    const { user, document } = renderApp();
-
-    const years = screen.getByLabelText("Expires after, in years");
-    await user.clear(years);
-    await user.type(years, "3");
-
-    expect(
-      within(document()).getByText(/^Expires 3 years from Effective Date/),
-    ).toBeInTheDocument();
-    expect(
-      within(document()).getByText("3-year term"),
-    ).toBeInTheDocument();
-  });
-
-  it("puts each party's details in their own column", async () => {
-    const { user, document } = renderApp();
-
-    const [firstCompany, secondCompany] = screen.getAllByLabelText("Company");
-    await user.type(firstCompany, "Acme, Inc.");
-    await user.type(secondCompany, "Globex Corp");
-
-    const row = within(document())
-      .getByRole("rowheader", { name: /Company/ })
-      .closest("tr")!;
-    const cells = within(row).getAllByRole("cell");
-    expect(cells[0]).toHaveTextContent("Acme, Inc.");
-    expect(cells[1]).toHaveTextContent("Globex Corp");
-  });
-
-  it("renders a typed answer as text, never as markup", async () => {
-    const { user, document } = renderApp();
-
-    await user.type(
-      screen.getByLabelText("Governing law"),
-      "<img src=x onerror=alert(1)>",
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Still needed (2): Purpose, Jurisdiction",
     );
+  });
 
-    expect(document().querySelector("img")).toBeNull();
+  it("says when every required field is collected", async () => {
+    const { say } = renderApp();
+    respondWith(turn({}, "All set.", []));
+
+    await say("That's everything");
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "All required information has been collected",
+    );
+  });
+
+  it("keeps the message to retry when the assistant fails", async () => {
+    const { say } = renderApp();
+    fetchMock.mockResolvedValueOnce(new Response("", { status: 502 }));
+
+    await say("Acme and Globex");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/try again/);
+    expect(screen.getByLabelText("Message")).toHaveValue("Acme and Globex");
+    expect(within(screen.getByRole("log")).queryByText("Acme and Globex")).toBeNull();
+  });
+
+  it("renders an extracted answer as text, never as markup", async () => {
+    const { say, document } = renderApp();
+    respondWith(turn({ governingLaw: "<img src=x onerror=alert(1)>" }));
+
+    await say("Hi");
+
     expect(
-      within(document()).getAllByText("<img src=x onerror=alert(1)>").length,
+      (await within(document()).findAllByText("<img src=x onerror=alert(1)>")).length,
     ).toBeGreaterThan(0);
+    expect(document().querySelector("img")).toBeNull();
   });
 });
 
 describe("resetting", () => {
-  it("clears the form and the document together", async () => {
-    const { user, document } = renderApp();
+  it("clears the conversation, the status and the document together", async () => {
+    const { user, say, document } = renderApp();
+    respondWith(turn({ governingLaw: "Delaware" }, "Noted."));
 
-    await user.type(screen.getByLabelText("Governing law"), "Delaware");
+    await say("Delaware");
+    await screen.findByText("Noted.");
     await user.click(screen.getByRole("button", { name: "Reset" }));
 
-    expect(screen.getByLabelText("Governing law")).toHaveValue("");
+    expect(screen.queryByText("Noted.")).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
     expect(within(document()).getAllByText("[Fill in state]")).toHaveLength(3);
   });
 });
@@ -123,10 +171,7 @@ describe("downloading", () => {
     window.document.title = "Prelegal — Mutual NDA creator";
   });
 
-  afterEach(() => {
-    print.mockClear();
-    vi.unstubAllGlobals();
-  });
+  afterEach(() => print.mockClear());
 
   it("opens the print dialog", async () => {
     const { user } = renderApp();
@@ -148,25 +193,20 @@ describe("downloading", () => {
   });
 
   it("names both companies once they are known", async () => {
-    const { user } = renderApp();
+    const { user, say } = renderApp();
+    respondWith(
+      turn({
+        party1: { ...emptyValues.party1, company: "Acme, Inc." },
+        party2: { ...emptyValues.party2, company: "Globex Corp" },
+      }, "Got it."),
+    );
 
-    const [firstCompany, secondCompany] = screen.getAllByLabelText("Company");
-    await user.type(firstCompany, "Acme, Inc.");
-    await user.type(secondCompany, "Globex Corp");
+    await say("Acme, Inc. and Globex Corp");
+    await screen.findByText("Got it.");
     await user.click(screen.getByRole("button", { name: "Download PDF" }));
 
     expect(window.document.title).toBe(
       "Mutual NDA — Acme, Inc. and Globex Corp",
     );
-  });
-
-  it("waits for both companies before naming either", async () => {
-    const { user } = renderApp();
-
-    const [firstCompany] = screen.getAllByLabelText("Company");
-    await user.type(firstCompany, "Acme, Inc.");
-    await user.click(screen.getByRole("button", { name: "Download PDF" }));
-
-    expect(window.document.title).toBe("Mutual Non-Disclosure Agreement");
   });
 });

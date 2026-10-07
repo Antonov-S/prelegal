@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 
+import NdaChat from "@/components/NdaChat";
 import NdaDocument from "@/components/NdaDocument";
-import NdaForm from "@/components/NdaForm";
+import type { ChatTurn } from "@/lib/mnda/chat";
 import type { MndaTemplate } from "@/lib/mnda/types";
-import { emptyValues, type NdaValues, type PartyValues } from "@/lib/mnda/values";
+import { emptyValues, type NdaValues } from "@/lib/mnda/values";
 
 /**
  * The name the printed document goes out under. Chrome puts the page title in
@@ -23,6 +24,10 @@ function documentTitle(values: NdaValues): string {
 
 export default function NdaCreator({ template }: { template: MndaTemplate }) {
   const [values, setValues] = useState<NdaValues>(emptyValues);
+  // Null until the first turn, so the status starts as an invitation to chat.
+  const [missing, setMissing] = useState<string[] | null>(null);
+  // Remounting the chat is how Reset clears the conversation.
+  const [chatKey, setChatKey] = useState(0);
 
   const print = () => {
     const appTitle = document.title;
@@ -35,17 +40,16 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
     window.print();
   };
 
-  const update = (patch: Partial<NdaValues>) =>
-    setValues((current) => ({ ...current, ...patch }));
+  const applyTurn = (turn: ChatTurn) => {
+    setValues(turn.fields);
+    setMissing(turn.missing);
+  };
 
-  const updateParty = (
-    party: "party1" | "party2",
-    patch: Partial<PartyValues>,
-  ) =>
-    setValues((current) => ({
-      ...current,
-      [party]: { ...current[party], ...patch },
-    }));
+  const reset = () => {
+    setValues(emptyValues);
+    setMissing(null);
+    setChatKey((key) => key + 1);
+  };
 
   return (
     <div className="min-h-full bg-neutral-200 print:bg-white">
@@ -56,12 +60,12 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
               Mutual NDA creator
             </h1>
             <p className="text-sm text-neutral-500">
-              Fill in the cover page and download the completed agreement.
+              Chat with the assistant to complete the agreement, then download it.
             </p>
           </div>
           <button
             type="button"
-            onClick={() => setValues(emptyValues)}
+            onClick={reset}
             className="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
           >
             Reset
@@ -77,14 +81,12 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
       </header>
 
       <main className="mx-auto grid max-w-7xl gap-8 px-6 py-8 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] print:block print:max-w-none print:p-0">
-        <div className="lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)] lg:overflow-y-auto lg:pr-2 print:hidden">
-          <NdaForm
-            template={template.coverPage}
-            values={values}
-            onChange={update}
-            onPartyChange={updateParty}
-          />
-          <div className="mt-6 space-y-2 text-xs text-neutral-500">
+        <div className="flex flex-col gap-4 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)] print:hidden">
+          <Status missing={missing} />
+          <div className="min-h-0 flex-1">
+            <NdaChat key={chatKey} values={values} onTurn={applyTurn} />
+          </div>
+          <div className="space-y-2 text-xs text-neutral-500">
             <p>
               Download PDF opens your browser&rsquo;s print dialog. Choose
               &ldquo;Save as PDF&rdquo; as the destination to keep a copy
@@ -108,5 +110,37 @@ export default function NdaCreator({ template }: { template: MndaTemplate }) {
         </div>
       </main>
     </div>
+  );
+}
+
+/** Progress towards a complete agreement, as computed by the backend. */
+function Status({ missing }: { missing: string[] | null }) {
+  if (missing === null) {
+    return (
+      <p className="rounded-md bg-white px-4 py-3 text-sm text-neutral-600 ring-1 ring-neutral-300/70">
+        Answer the assistant&rsquo;s questions and the agreement fills in as
+        you go.
+      </p>
+    );
+  }
+  if (missing.length === 0) {
+    return (
+      <p
+        role="status"
+        className="rounded-md bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 ring-1 ring-emerald-200"
+      >
+        All required information has been collected. The agreement is ready
+        to download.
+      </p>
+    );
+  }
+  return (
+    <p
+      role="status"
+      className="rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900 ring-1 ring-amber-200"
+    >
+      <span className="font-medium">Still needed ({missing.length}):</span>{" "}
+      {missing.join(", ")}
+    </p>
   );
 }

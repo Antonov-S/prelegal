@@ -102,8 +102,8 @@ describe("coverPageLinkValues", () => {
   it("phrases the open-ended alternatives", () => {
     const fields = coverPageLinkValues(coverPage, {
       ...filled,
-      term: { ...filled.term, fixed: false },
-      confidentiality: { ...filled.confidentiality, fixed: false },
+      term: { fixed: false, years: 2 },
+      confidentiality: { fixed: false, years: 5 },
     });
     expect(fields["MNDA Term"].text).toBe(
       "term, which continues until terminated",
@@ -133,11 +133,14 @@ describe("coverPageLinkValues", () => {
     expect(fields.Jurisdiction.text).toBe("New Castle, DE");
   });
 
-  // A duration always has an answer, so it is never shown as unfilled.
-  it("always counts the durations as answered", () => {
+  // No duration is assumed: until one is chosen it reads as unanswered.
+  it("counts unchosen durations as unanswered", () => {
     const fields = coverPageLinkValues(coverPage, emptyValues);
-    expect(fields["MNDA Term"].filled).toBe(true);
-    expect(fields["Term of Confidentiality"].filled).toBe(true);
+    expect(fields["MNDA Term"]).toEqual({ text: "[MNDA Term]", filled: false });
+    expect(fields["Term of Confidentiality"]).toEqual({
+      text: "[Term of Confidentiality]",
+      filled: false,
+    });
   });
 });
 
